@@ -1,6 +1,20 @@
 # poke~pcb
 
+![MIT License](https://img.shields.io/badge/license-MIT-2A9466)
+![No install](https://img.shields.io/badge/install-none-3C5865)
+![Runs in browser](https://img.shields.io/badge/runs-in%20browser-F0A22E)
+
 poke~pcb is an assembly map for JLCPCB boards that runs entirely in the browser. You drop in your gerbers, BOM and CPL, and it shows where every part goes. You can tick parts off as you place them, and it checks the BOM against the board.
+
+![Board view with a part selected and pin 1 highlighted](docs/screenshot.png)
+
+### Demo
+
+<video src="docs/demo.mp4" controls width="800">
+  Your browser can't play this video — download it from <a href="docs/demo.mp4">docs/demo.mp4</a>.
+</video>
+
+Dropping in a board's gerbers, BOM and CPL, then locating and marking parts as placed.
 
 ## Run it
 
