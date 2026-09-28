@@ -1,0 +1,2597 @@
+<!doctype html>
+<html lang="en">
+<head data-poke>
+<meta charset="utf-8" data-poke>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" data-poke>
+<title data-poke>poke~pcb</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" data-poke>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin data-poke>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet" data-poke>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" data-poke></script>
+<style data-poke>
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #E6EBEB; --surface: #F5F7F6; --ink: #17222A; --muted: #56666E; --rule: #C8D1D3; --chip: #E3E9EA;
+  --mat: #3C5865; --mat-deep: #33505C; --mat-ink: #E9F0F2;
+  --amber: #F0A22E; --amber-soft: rgba(240,162,46,.16); --pin1: #E5484D; --placed: #2A9466; --placed-soft: rgba(42,148,102,.14);
+  --net: #37C6D0; --warn: #8F5200; --err: #C23B32; --info: #56666E;
+  --mask: #0E1112; --cu: #1F2629; --pad: #C3C7CA; --silk: #ECEDE8;
+  --font: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11191D; --surface: #172127; --ink: #DCE4E7; --muted: #8D9BA2; --rule: #27333A; --chip: #1F2B31;
+    --mat: #203440; --mat-deep: #1A2B35; --mat-ink: #DCE7EB;
+    --amber: #F4AE45; --amber-soft: rgba(244,174,69,.14); --pin1: #FF6468; --placed: #3DBB82; --placed-soft: rgba(61,187,130,.14);
+    --warn: #F4AE45; --err: #FF7A70; --info: #8D9BA2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11191D; --surface: #172127; --ink: #DCE4E7; --muted: #8D9BA2; --rule: #27333A; --chip: #1F2B31;
+  --mat: #203440; --mat-deep: #1A2B35; --mat-ink: #DCE7EB;
+  --amber: #F4AE45; --amber-soft: rgba(244,174,69,.14); --pin1: #FF6468; --placed: #3DBB82; --placed-soft: rgba(61,187,130,.14);
+  --warn: #F4AE45; --err: #FF7A70; --info: #8D9BA2;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+body { height: 100%; margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 15px; line-height: 1.4; -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+/* ---------- wordmark ---------- */
+.mark { display: inline-flex; align-items: center; gap: 0; font-weight: 800; font-stretch: 118%; letter-spacing: -.01em; line-height: 1; white-space: nowrap; }
+.mark svg { width: .95em; height: .5em; margin: 0 .04em; overflow: visible; }
+.mark svg path { fill: none; stroke: var(--amber); stroke-width: 2.6; stroke-linecap: round; }
+.mark svg circle { fill: var(--amber); }
+
+/* ---------- landing ---------- */
+#landing { min-height: 100%; display: grid; place-items: start center; padding: 56px 20px 40px; overflow-y: auto; height: 100%; }
+.land { width: 100%; max-width: 680px; }
+.land .mark { font-size: 58px; }
+.land .lede { margin: 14px 0 28px; font-size: 19px; color: var(--muted); max-width: 46ch; line-height: 1.35; }
+.drop {
+  position: relative; border-radius: 14px; background: var(--mat); color: var(--mat-ink); padding: 34px 28px; overflow: hidden;
+  border: 2px dashed rgba(255,255,255,.28); cursor: pointer; transition: border-color .15s, background .15s;
+}
+.drop::before, .viewer::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(to right, rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,.045) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.drop:hover, .drop.over { border-color: var(--amber); }
+.drop.over { background: var(--mat-deep); }
+.drop h2 { position: relative; margin: 0; font-size: 22px; font-weight: 700; font-stretch: 105%; }
+.drop p { position: relative; margin: 6px 0 18px; opacity: .8; font-size: 14.5px; max-width: 52ch; }
+.drop .btns { position: relative; display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { border: 0; border-radius: 8px; padding: 9px 16px; font-size: 14.5px; font-weight: 650; cursor: pointer; }
+.btn.primary { background: var(--amber); color: #231500; }
+.btn.primary:disabled { background: var(--rule); color: var(--muted); cursor: not-allowed; }
+.btn.ghost { background: rgba(255,255,255,.12); color: var(--mat-ink); }
+.btn.ghost:hover { background: rgba(255,255,255,.2); }
+.btn.plain { background: none; border: 1px solid var(--rule); color: var(--ink); font-weight: 550; }
+.btn.plain:hover { border-color: var(--muted); }
+
+.staged { margin: 22px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--rule); }
+.staged li { display: grid; grid-template-columns: 26px minmax(0,1fr) auto; gap: 10px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.staged .st { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; margin-top: 1px; }
+.staged .st svg { width: 13px; height: 13px; stroke: #fff; fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.staged .ok .st { background: var(--placed); }
+.staged .opt .st { border: 1.5px dashed var(--rule); }
+.staged .bad .st { background: var(--err); }
+.staged b { font-weight: 650; }
+.staged .d { color: var(--muted); font-size: 13.5px; margin-top: 1px; overflow-wrap: anywhere; }
+.staged .x { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 13px; padding: 2px 4px; text-decoration: underline; text-underline-offset: 2px; }
+.notes { margin: 12px 0 0; padding: 0; list-style: none; font-size: 13.5px; color: var(--muted); }
+.notes li { padding: 3px 0; }
+.notes li.warn { color: var(--warn); }
+.go { margin-top: 22px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.go .busy { color: var(--muted); font-size: 14px; }
+.err-box { margin-top: 14px; color: var(--err); font-size: 14px; }
+.fine { margin-top: 34px; font-size: 13.5px; color: var(--muted); }
+.fine details { margin-top: 8px; }
+.fine summary { cursor: pointer; color: var(--ink); font-weight: 600; }
+.fine ul { margin: 8px 0 0; padding-left: 18px; }
+.fine li { margin: 4px 0; }
+
+/* ---------- app ---------- */
+#app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); grid-template-columns: minmax(0, 1fr); }
+header { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; padding: 10px 18px; border-bottom: 1px solid var(--rule); background: var(--surface); }
+header .mark { font-size: 20px; }
+.hsep { width: 1px; align-self: stretch; background: var(--rule); }
+.title { display: flex; flex-direction: column; min-width: 0; flex: 1 1 260px; }
+.title h1 { margin: 0; font-size: 18px; line-height: 1.15; font-weight: 700; font-stretch: 105%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.title p { margin: 2px 0 0; color: var(--muted); font-size: 12.5px; min-width: 0; }
+.progress { display: flex; align-items: center; gap: 10px; }
+.progress select { border: 1px solid var(--rule); background: var(--bg); border-radius: 6px; padding: 4px 6px; font-size: 13px; }
+.count { font-variant-numeric: tabular-nums; font-size: 13.5px; white-space: nowrap; }
+.count b { font-size: 17px; font-weight: 700; }
+.bar { width: 110px; height: 6px; border-radius: 3px; background: var(--rule); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--placed); transition: width .25s ease; }
+.hactions { display: flex; gap: 6px; }
+.txt-btn { background: none; border: 1px solid var(--rule); border-radius: 6px; padding: 5px 10px; font-size: 13px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.txt-btn:hover { color: var(--ink); border-color: var(--muted); }
+
+main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 430px); min-height: 0; }
+.viewer { position: relative; background: var(--mat); min-height: 0; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+#pcb { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; }
+#pcb.dragging { cursor: grabbing; }
+.sub { fill: var(--mask); }
+.cu-f { fill: var(--cuc, var(--cu)); }
+.cu-s { fill: none; stroke: var(--cuc, var(--cu)); stroke-linecap: round; stroke-linejoin: round; }
+.hasl { --cuc: var(--pad); }
+.pad-f { fill: var(--pad); }
+.pad-s { fill: none; stroke: var(--pad); stroke-linecap: round; stroke-linejoin: round; }
+.opn-f { fill: #fff; } .opn-s { fill: none; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; }
+.clr-f { fill: #000; } .clr-s { fill: none; stroke: #000; stroke-linecap: round; stroke-linejoin: round; }
+.silk-f { fill: var(--silk); }
+.silk-s { fill: none; stroke: var(--silk); stroke-linecap: round; stroke-linejoin: round; }
+.holes circle { fill: var(--mat-deep); }
+.holes .slot { fill: none; stroke: var(--mat-deep); stroke-linecap: round; }
+.edge-s { fill: none; stroke: rgba(255,255,255,.2); stroke-width: .08; }
+.edge-f { fill: none; }
+.hide-cu .lyr-cu { display: none; }
+.hide-silk .lyr-silk { display: none; }
+
+.dim { fill: #000; opacity: 0; transition: opacity .15s; pointer-events: none; }
+.has-sel .dim, .has-net .dim { opacity: .52; }
+.cmp .hit, .cmp .pad { fill: transparent; }
+.cmp .body { fill: var(--placed); opacity: 0; pointer-events: none; }
+.cmp .csilk { display: none; pointer-events: none; }
+.cmp .csilk path { fill: none; stroke: var(--amber); stroke-linecap: round; stroke-linejoin: round; }
+.cmp .csilk path.sf { fill: var(--amber); stroke: none; }
+.cmp .halo { fill: none; stroke: none; pointer-events: none; transform-box: fill-box; transform-origin: center; }
+.cmp .cross { stroke: none; pointer-events: none; }
+.cmp.placed .body { opacity: .62; }
+.has-sel .cmp.placed:not(.sel) .body { opacity: .28; }
+.cmp.sel .pad { fill: var(--amber); }
+.cmp.sel.placed .pad { fill: var(--placed); }
+.cmp.sel.placed .body { opacity: .35; }
+.cmp.sel.polar .pad.p1 { fill: var(--pin1); }
+.cmp.sel .csilk { display: inline; }
+.cmp.sel .cross { stroke: var(--amber); stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
+.cmp.sel .halo { stroke: var(--amber); stroke-width: 2px; vector-effect: non-scaling-stroke; animation: halo-in .28s cubic-bezier(.2,.7,.3,1); }
+.cmp.sel.placed .halo { stroke: var(--placed); }
+.cmp.focus .halo { stroke-width: 4px; }
+.cmp.others-dim .pad { opacity: .55; }
+.cmp.sel .pad:hover { stroke: #fff; stroke-width: 1.5px; vector-effect: non-scaling-stroke; }
+.cmp.hover:not(.sel) .halo { stroke: var(--mat-ink); stroke-width: 1.5px; vector-effect: non-scaling-stroke; stroke-dasharray: 4 3; }
+.cmp.hover:not(.sel) .pad { fill: rgba(255,255,255,.25); }
+.cmp .pad.net { fill: var(--net) !important; opacity: 1 !important; }
+@keyframes halo-in { from { transform: scale(2.2); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.lbl { font-family: var(--font); font-weight: 650; font-stretch: 88%; text-anchor: middle; dominant-baseline: central; fill: #fff; paint-order: stroke; stroke: rgba(0,0,0,.8); stroke-linejoin: round; pointer-events: none; opacity: 0; }
+.show-lbl .lbl { opacity: .78; }
+.lbl.sel { opacity: 1; fill: var(--amber); stroke: rgba(0,0,0,.9); }
+.lbl.sel.placed { fill: #7FE0B2; }
+
+.vbar { position: absolute; top: 12px; left: 12px; right: 140px; display: flex; gap: 8px; flex-wrap: wrap; pointer-events: none; z-index: 2; }
+.vtools { position: absolute; top: 12px; right: 12px; z-index: 2; }
+.vbar > * { pointer-events: auto; }
+.seg { display: inline-flex; background: rgba(8,14,17,.62); border-radius: 8px; padding: 3px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.seg button { border: 0; background: none; color: var(--mat-ink); padding: 5px 11px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 550; opacity: .78; }
+.seg button:hover { opacity: 1; }
+.seg button[aria-pressed="true"] { background: rgba(255,255,255,.16); opacity: 1; }
+.seg button.icon { padding: 5px 8px; display: inline-flex; align-items: center; }
+.seg svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.spacer { flex: 1; }
+.sm { display: none; }
+.legend { position: absolute; left: 12px; bottom: 12px; z-index: 2; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; background: rgba(8,14,17,.62); color: var(--mat-ink); padding: 6px 12px; border-radius: 8px; font-size: 12px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); pointer-events: none; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.legend .mir { opacity: .8; }
+.looks { position: absolute; right: 12px; bottom: 12px; z-index: 2; display: flex; gap: 6px; align-items: center; background: rgba(8,14,17,.62); padding: 6px 9px; border-radius: 8px; }
+.looks button { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.35); padding: 0; cursor: pointer; }
+.looks button[aria-pressed="true"] { outline: 2px solid var(--mat-ink); outline-offset: 1.5px; }
+.tip { position: absolute; z-index: 3; pointer-events: none; min-width: 120px; max-width: 260px; background: var(--surface); color: var(--ink); border: 1px solid var(--rule); border-radius: 8px; padding: 7px 10px; font-size: 13px; line-height: 1.35; box-shadow: 0 6px 20px rgba(0,0,0,.28); opacity: 0; transform: translateY(4px); transition: opacity .1s, transform .1s; }
+.tip.on { opacity: 1; transform: none; }
+.tip b { font-size: 15px; font-weight: 700; margin-right: 6px; }
+.tip .m { color: var(--muted); }
+.tip .ok { color: var(--placed); font-weight: 600; }
+.nodata { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); z-index: 2; max-width: 340px; background: rgba(8,14,17,.72); color: var(--mat-ink); padding: 12px 16px; border-radius: 10px; font-size: 13.5px; text-align: center; }
+
+.panel { display: flex; flex-direction: column; min-height: 0; background: var(--surface); border-left: 1px solid var(--rule); }
+.tabs { display: flex; gap: 4px; padding: 10px 16px 0; border-bottom: 1px solid var(--rule); }
+.tabs button { border: 0; background: none; padding: 7px 10px 9px; font-size: 14px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1px; display: inline-flex; gap: 6px; align-items: center; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--amber); }
+.tabs .n { font-size: 11.5px; font-weight: 700; border-radius: 9px; padding: 0 6px; background: var(--chip); color: var(--muted); font-variant-numeric: tabular-nums; }
+.tabs .n.err { background: var(--err); color: #fff; }
+.tabs .n.warn { background: var(--amber); color: #231500; }
+.tools { padding: 10px 16px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.search { flex: 1 1 160px; position: relative; }
+.search input { width: 100%; border: 1px solid var(--rule); background: var(--bg); border-radius: 7px; padding: 7px 10px 7px 30px; font-size: 14px; }
+.search input::placeholder { color: var(--muted); }
+.search svg { position: absolute; left: 9px; top: 50%; width: 15px; height: 15px; transform: translateY(-50%); stroke: var(--muted); fill: none; stroke-width: 1.8; }
+.filters { display: inline-flex; border: 1px solid var(--rule); border-radius: 7px; overflow: hidden; }
+.filters button { border: 0; background: none; padding: 6px 10px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.filters button + button { border-left: 1px solid var(--rule); }
+.filters button[aria-pressed="true"] { background: var(--chip); color: var(--ink); font-weight: 600; }
+.list { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.list ol { list-style: none; margin: 0; padding: 0; }
+.group-h { margin: 0; padding: 14px 16px 6px; font-size: 13px; font-weight: 650; color: var(--muted); }
+.row { display: grid; grid-template-columns: 46px minmax(0,1fr); gap: 12px; padding: 11px 16px 12px; border-bottom: 1px solid var(--rule); cursor: pointer; position: relative; }
+.row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; }
+.row.hot, .row.active { background: var(--amber-soft); }
+@media (hover: hover) { .row:hover { background: var(--amber-soft); } }
+.row.active::before { background: var(--amber); }
+.row.done .val { color: var(--muted); }
+.row.done.active::before { background: var(--placed); }
+.check { width: 46px; height: 46px; border-radius: 9px; border: 1.5px solid var(--rule); background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; padding: 0; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--muted); line-height: 1.1; }
+.check b { font-size: 16px; color: var(--ink); font-weight: 700; }
+.check:hover { border-color: var(--placed); }
+.check.part { border-color: var(--placed); }
+.check.full { background: var(--placed); border-color: var(--placed); color: #fff; }
+.check svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.check.info { border-style: dashed; cursor: default; }
+.l1 { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.val { font-size: 17px; font-weight: 700; font-stretch: 105%; letter-spacing: -.005em; overflow-wrap: anywhere; }
+.qty { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.lcsc { margin-left: auto; font-size: 12.5px; color: var(--muted); text-decoration: none; font-variant-numeric: tabular-nums; border-bottom: 1px dotted var(--rule); }
+.lcsc:hover { color: var(--ink); border-bottom-color: var(--ink); }
+.kind { font-size: 13px; color: var(--muted); margin-top: 1px; overflow-wrap: anywhere; }
+.refs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.ref { border: 1px solid transparent; background: var(--chip); border-radius: 5px; padding: 2px 7px; font-size: 13px; font-weight: 600; font-stretch: 92%; font-variant-numeric: tabular-nums; cursor: pointer; line-height: 1.35; }
+.ref:hover, .ref.focus { border-color: var(--amber); }
+.ref[aria-pressed="true"] { background: var(--placed-soft); color: var(--placed); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.ref.static { cursor: default; }
+.ref.gone { background: none; border: 1px dashed var(--err); color: var(--err); cursor: default; }
+.ref.match { outline: 2px solid var(--amber); outline-offset: 1px; }
+.note { margin: 7px 0 0; font-size: 12.5px; color: var(--muted); max-width: 60ch; }
+.note.warn { color: var(--warn); }
+.note .pin1 { display: inline-block; width: 8px; height: 8px; border-radius: 2px; background: var(--pin1); margin-right: 4px; }
+.empty { padding: 28px 16px; color: var(--muted); font-size: 14px; }
+.chk { list-style: none; margin: 0; padding: 0; }
+.chk li { display: grid; grid-template-columns: 18px minmax(0,1fr); gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--rule); font-size: 14px; }
+.chk li.link { cursor: pointer; }
+.chk li.link:hover, .chk li.active { background: var(--amber-soft); }
+.chk .lv { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; }
+.chk .error .lv { background: var(--err); }
+.chk .warn .lv { background: var(--amber); }
+.chk .info .lv { background: var(--rule); }
+.chk .hint { display: block; font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+.chk-foot { padding: 14px 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.keys { padding: 9px 16px; border-top: 1px solid var(--rule); font-size: 12px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+kbd { font-family: var(--font); font-size: 11px; font-weight: 600; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; color: var(--ink); background: var(--bg); }
+
+.veil { position: fixed; inset: 0; z-index: 20; background: rgba(12,20,24,.72); display: grid; place-items: center; color: #fff; font-size: 20px; font-weight: 650; pointer-events: none; }
+.veil div { border: 2px dashed var(--amber); border-radius: 16px; padding: 36px 48px; background: rgba(60,88,101,.6); }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); z-index: 30; background: var(--ink); color: var(--bg); padding: 9px 16px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; max-width: 90vw; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 820px) {
+  #landing { padding: 32px 16px; }
+  .land .mark { font-size: 44px; }
+  .land .lede { font-size: 17px; }
+  header { padding: 8px 12px 9px; gap: 7px 10px; }
+  header .mark, .hsep { display: none; }
+  .title { flex-basis: 100%; }
+  .title h1 { font-size: 17px; }
+  .title p { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .progress { width: 100%; }
+  .bar { flex: 1; width: auto; }
+  .hactions { width: 100%; }
+  .txt-btn { padding: 4px 9px; font-size: 12.5px; }
+  .vbar { right: 8px; }
+  .vtools { top: auto; bottom: 8px; right: 8px; }
+  .legend { left: 8px; bottom: 8px; }
+  main { grid-template-columns: 1fr; grid-template-rows: minmax(0, 52%) minmax(0, 1fr); }
+  .panel { border-left: 0; border-top: 1px solid var(--rule); }
+  .keys, .looks { display: none; }
+  .legend { font-size: 11px; gap: 10px; padding: 5px 9px; }
+  .vbar { top: 8px; left: 8px; right: 8px; gap: 6px; }
+  .seg button { padding: 5px 8px; font-size: 12.5px; }
+  .seg button.icon { padding: 5px 6px; }
+  .lg { display: none; } .sm { display: inline; }
+  .tools { padding: 9px 12px; }
+  .row { padding: 10px 12px 11px; gap: 10px; }
+}
+@media (pointer: coarse) { #pickFolder { display: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .cmp.sel .halo { animation: none; }
+  .bar i, .dim, .tip, .toast, .drop { transition: none; }
+}
+</style>
+</head>
+<body data-poke>
+<!-- landing -->
+<div id="landing" data-poke>
+  <div class="land">
+    <div class="mark" aria-label="poke~pcb"><span>poke</span><svg viewBox="0 0 40 20" aria-hidden="true"><path d="M3 13 C 9 3, 15 3, 20 10 S 31 17, 37 7"/><circle cx="3" cy="13" r="2.6"/><circle cx="37" cy="7" r="2.6"/></svg><span>pcb</span></div>
+    <p class="lede">See where every part goes on your JLCPCB board, then tick them off as you place them.</p>
+
+    <div class="drop" id="drop" role="button" tabindex="0" aria-label="Choose or drop files">
+      <h2>Drop your JLC files here</h2>
+      <p>The gerber zip you uploaded, or the production zip JLC sends back. Add your BOM and pick-and-place (CPL) file too, as CSV or XLSX.</p>
+      <div class="btns">
+        <button type="button" class="btn ghost" id="pickFiles">Choose files</button>
+        <button type="button" class="btn ghost" id="pickFolder">Choose a folder</button>
+      </div>
+      <input type="file" id="fileIn" multiple hidden>
+      <input type="file" id="dirIn" webkitdirectory multiple hidden>
+    </div>
+
+    <ul class="staged" id="staged" aria-live="polite"></ul>
+    <ul class="notes" id="notes"></ul>
+    <div class="go">
+      <button type="button" class="btn primary" id="openBtn" disabled>Open board</button>
+      <span class="busy" id="busy"></span>
+    </div>
+    <div class="err-box" id="errBox" role="alert"></div>
+
+    <div class="fine">
+      Everything runs in this browser tab. Your files are never uploaded anywhere.
+      <details>
+        <summary>Which files work?</summary>
+        <ul>
+          <li>Gerbers as a zip, a folder or loose files, from KiCad, EasyEDA, Altium, Eagle or Fusion 360. Zips inside zips are fine.</li>
+          <li>KiCad gerbers usually say which pad belongs to which part. That gives exact highlights, pin 1 and net names without a CPL file.</li>
+          <li>Other gerbers need the CPL (pick-and-place) file to find parts. Positions are matched to the paste pads automatically.</li>
+          <li>BOM as CSV or XLSX with a designator column, plus value, footprint and LCSC columns if you have them. JLC's BOM template works as is.</li>
+          <li>PDF BOMs and old .xls files can't be read. Export them as CSV or XLSX.</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+</div>
+
+<!-- assembly view -->
+<div id="app" hidden data-poke>
+  <header>
+    <div class="mark" aria-label="poke~pcb"><span>poke</span><svg viewBox="0 0 40 20" aria-hidden="true"><path d="M3 13 C 9 3, 15 3, 20 10 S 31 17, 37 7"/><circle cx="3" cy="13" r="2.6"/><circle cx="37" cy="7" r="2.6"/></svg><span>pcb</span></div>
+    <span class="hsep" aria-hidden="true"></span>
+    <div class="title"><h1 id="bName">board</h1><p id="bMeta"></p></div>
+    <div class="progress" aria-live="polite">
+      <select id="boardSel" aria-label="Which board you're assembling"></select>
+      <span class="count"><b id="nPlaced">0</b> of <span id="nTotal">0</span> placed</span>
+      <span class="bar" aria-hidden="true"><i id="bar"></i></span>
+    </div>
+    <div class="hactions">
+      <button class="txt-btn" id="clearBtn" type="button">Clear marks</button>
+      <button class="txt-btn" id="saveBtn" type="button">Save offline copy</button>
+      <button class="txt-btn" id="filesBtn" type="button">Change files</button>
+    </div>
+  </header>
+  <main>
+    <section class="viewer" id="viewer" aria-label="Board view">
+      <svg id="pcb" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Board">
+        <g id="world">
+          <g id="static-top"></g>
+          <g id="static-bottom" style="display:none"></g>
+          <g id="ov-top"></g>
+          <g id="ov-bottom" style="display:none"></g>
+          <g id="labels"></g>
+        </g>
+      </svg>
+      <div class="vbar">
+        <div class="seg" role="group" aria-label="Board side">
+          <button type="button" id="sideTop" aria-pressed="true">Top</button>
+          <button type="button" id="sideBot" aria-pressed="false">Bottom</button>
+        </div>
+        <div class="seg" role="group" aria-label="Layers">
+          <button type="button" id="tgCu" aria-pressed="true">Traces</button>
+          <button type="button" id="tgSilk" aria-pressed="true"><span class="lg">Silkscreen</span><span class="sm">Silk</span></button>
+          <button type="button" id="tgLbl" aria-pressed="false"><span class="lg">Designators</span><span class="sm">Labels</span></button>
+          <button type="button" id="tgNet" aria-pressed="false" title="Hover a pad to light up everything on its net (N)">Nets</button>
+        </div>
+      </div>
+      <div class="vtools">
+        <div class="seg" role="group" aria-label="View">
+          <button type="button" class="icon" id="rotBtn" title="Rotate 90° (R)" aria-label="Rotate 90 degrees"><svg viewBox="0 0 16 16"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M13.6 1.8v2.6h-2.6"/></svg></button>
+          <button type="button" class="icon" id="zoomSelBtn" title="Zoom to selected parts (Z)" aria-label="Zoom to selected parts"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/><path d="M7 5v4M5 7h4"/></svg></button>
+          <button type="button" class="icon" id="fitBtn" title="Fit board (0)" aria-label="Fit board to view"><svg viewBox="0 0 16 16"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/></svg></button>
+        </div>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span><i style="background:var(--amber)"></i>Goes here</span>
+        <span id="lgPin"><i style="background:var(--pin1)"></i>Pin 1</span>
+        <span><i style="background:var(--placed)"></i>Placed</span>
+        <span id="lgNet" hidden><i style="background:var(--net)"></i>Same net</span>
+        <span class="mir" id="lgMir" hidden>Bottom, mirrored</span>
+      </div>
+      <div class="looks" id="looks" role="group" aria-label="Solder mask colour"></div>
+      <div class="nodata" id="nodata" hidden></div>
+      <div class="tip" id="tip" role="status"></div>
+    </section>
+    <section class="panel" aria-label="Parts and checks">
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" id="tabParts" aria-selected="true">Parts</button>
+        <button type="button" role="tab" id="tabChecks" aria-selected="false">Checks <span class="n" id="chkN">0</span></button>
+      </div>
+      <div id="partsPane" class="list-wrap" style="display:flex;flex-direction:column;min-height:0;flex:1">
+        <div class="tools">
+          <label class="search"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6"/><path d="M10.4 10.4 14 14"/></svg>
+            <input id="q" type="search" placeholder="Search, e.g. 100n or C14" autocomplete="off" aria-label="Search parts"></label>
+          <div class="filters" role="group" aria-label="Show">
+            <button type="button" data-f="all" aria-pressed="true">All</button>
+            <button type="button" data-f="todo" aria-pressed="false">To place</button>
+            <button type="button" data-f="done" aria-pressed="false">Placed</button>
+          </div>
+        </div>
+        <div class="list" id="list"></div>
+        <div class="keys" aria-hidden="true">
+          <span><kbd>↑</kbd> <kbd>↓</kbd> step lines</span><span><kbd>Space</kbd> mark line placed</span><span><kbd>F</kbd> flip</span><span><kbd>R</kbd> rotate</span><span><kbd>Z</kbd> zoom to part</span><span><kbd>Esc</kbd> clear</span>
+        </div>
+      </div>
+      <div id="checksPane" hidden style="display:flex;flex-direction:column;min-height:0;flex:1">
+        <div class="list"><ul class="chk" id="chkList"></ul>
+          <div class="chk-foot"><button type="button" class="btn plain" id="reportBtn">Download report (PDF)</button></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="veil" id="veil" hidden data-poke><div>Drop to add files</div></div>
+<div class="toast" id="toast" role="status" data-poke></div>
+<script data-poke>
+/* ---------- poke~pcb: file readers (zip, xlsx, csv, text) ---------- */
+const PokeIO = (() => {
+  async function sliceBytes(blob, a, b) { return new Uint8Array(await blob.slice(a, b).arrayBuffer()); }
+
+  function decodeName(bytes, flags) {
+    if (flags & 0x800) return new TextDecoder("utf-8").decode(bytes);
+    try { return new TextDecoder("utf-8", { fatal: true }).decode(bytes); }
+    catch (e) { try { return new TextDecoder("gbk").decode(bytes); } catch (e2) { return new TextDecoder("latin1").decode(bytes); } }
+  }
+
+  async function openZip(blob) {
+    const size = blob.size;
+    const tailLen = Math.min(size, 65536 + 22);
+    const tail = await sliceBytes(blob, size - tailLen, size);
+    let eocd = -1;
+    for (let i = tail.length - 22; i >= 0; i--) {
+      if (tail[i] === 0x50 && tail[i + 1] === 0x4b && tail[i + 2] === 0x05 && tail[i + 3] === 0x06) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error("This file isn't a readable zip archive.");
+    const dv = new DataView(tail.buffer, tail.byteOffset, tail.byteLength);
+    let count = dv.getUint16(eocd + 10, true), cdSize = dv.getUint32(eocd + 12, true), cdOff = dv.getUint32(eocd + 16, true);
+    if (cdOff === 0xffffffff || count === 0xffff || cdSize === 0xffffffff) {
+      const loc = eocd - 20;
+      if (loc >= 0 && dv.getUint32(loc, true) === 0x07064b50) {
+        const z64 = Number(dv.getBigUint64(loc + 8, true));
+        const z = await sliceBytes(blob, z64, z64 + 56), zd = new DataView(z.buffer);
+        count = Number(zd.getBigUint64(32, true)); cdSize = Number(zd.getBigUint64(40, true)); cdOff = Number(zd.getBigUint64(48, true));
+      }
+    }
+    const cd = await sliceBytes(blob, cdOff, cdOff + cdSize), cv = new DataView(cd.buffer);
+    const entries = [];
+    let p = 0;
+    for (let i = 0; i < count && p + 46 <= cd.length; i++) {
+      if (cv.getUint32(p, true) !== 0x02014b50) break;
+      const flags = cv.getUint16(p + 8, true), method = cv.getUint16(p + 10, true);
+      let csize = cv.getUint32(p + 20, true), usize = cv.getUint32(p + 24, true);
+      const nlen = cv.getUint16(p + 28, true), xlen = cv.getUint16(p + 30, true), clen = cv.getUint16(p + 32, true);
+      let off = cv.getUint32(p + 42, true);
+      if (csize === 0xffffffff || usize === 0xffffffff || off === 0xffffffff) {
+        let q = p + 46 + nlen; const qe = q + xlen;
+        while (q + 4 <= qe) {
+          const id = cv.getUint16(q, true), sz = cv.getUint16(q + 2, true);
+          if (id === 1) {
+            let r = q + 4;
+            if (usize === 0xffffffff) { usize = Number(cv.getBigUint64(r, true)); r += 8; }
+            if (csize === 0xffffffff) { csize = Number(cv.getBigUint64(r, true)); r += 8; }
+            if (off === 0xffffffff) { off = Number(cv.getBigUint64(r, true)); r += 8; }
+          }
+          q += 4 + sz;
+        }
+      }
+      const name = decodeName(cd.subarray(p + 46, p + 46 + nlen), flags).replace(/\\/g, "/");
+      entries.push({ name, method, csize, usize, off, dir: name.endsWith("/") });
+      p += 46 + nlen + xlen + clen;
+    }
+    async function read(e) {
+      const lh = await sliceBytes(blob, e.off, e.off + 30);
+      const lv = new DataView(lh.buffer);
+      if (lv.getUint32(0, true) !== 0x04034b50) throw new Error("Damaged zip entry: " + e.name);
+      const start = e.off + 30 + lv.getUint16(26, true) + lv.getUint16(28, true);
+      const data = blob.slice(start, start + e.csize);
+      if (e.method === 0) return new Uint8Array(await data.arrayBuffer());
+      if (e.method === 8) {
+        if (typeof DecompressionStream === "undefined") throw new Error("This browser can't unzip files. Try a current Chrome, Edge, Firefox or Safari.");
+        const ds = data.stream().pipeThrough(new DecompressionStream("deflate-raw"));
+        return new Uint8Array(await new Response(ds).arrayBuffer());
+      }
+      throw new Error(`Unsupported zip compression (method ${e.method}) in ${e.name}`);
+    }
+    return { entries: entries.filter(e => !e.dir), read };
+  }
+
+  function decodeText(bytes, hint) {
+    if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) return new TextDecoder("utf-8").decode(bytes.subarray(3));
+    if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xfe) return new TextDecoder("utf-16le").decode(bytes.subarray(2));
+    if (bytes.length >= 2 && bytes[0] === 0xfe && bytes[1] === 0xff) return new TextDecoder("utf-16be").decode(bytes.subarray(2));
+    // UTF-16LE without BOM (EasyEDA sometimes): many zero bytes at odd positions
+    if (bytes.length > 8) {
+      let z = 0; for (let i = 1; i < Math.min(bytes.length, 400); i += 2) if (bytes[i] === 0) z++;
+      if (z > Math.min(bytes.length, 400) / 2 * 0.8) return new TextDecoder("utf-16le").decode(bytes);
+    }
+    try { return new TextDecoder("utf-8", { fatal: true }).decode(bytes); }
+    catch (e) {
+      try { return new TextDecoder(hint === "gbk" ? "gbk" : "windows-1252").decode(bytes); }
+      catch (e2) { return new TextDecoder("latin1").decode(bytes); }
+    }
+  }
+
+  function parseCSV(text) {
+    const lines = text.split(/\r?\n/).slice(0, 12).join("\n");
+    const cands = [",", ";", "\t", "|"];
+    let delim = ",", best = -1;
+    for (const d of cands) {
+      const n = lines.split("\n").map(l => l.split(d).length - 1);
+      const score = n.reduce((a, b) => a + b, 0);
+      if (score > best) { best = score; delim = d; }
+    }
+    const rows = []; let row = [], cell = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+        else cell += c;
+      } else if (c === '"' && cell.trim() === "") { q = true; cell = ""; }
+      else if (c === delim) { row.push(cell.trim()); cell = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && text[i + 1] === "\n") i++;
+        row.push(cell.trim()); cell = "";
+        if (row.some(v => v !== "")) rows.push(row);
+        row = [];
+      } else cell += c;
+    }
+    row.push(cell.trim());
+    if (row.some(v => v !== "")) rows.push(row);
+    return rows;
+  }
+
+  function xmlUnescape(s) {
+    return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+      .replace(/&#x([0-9a-f]+);/gi, (m, h) => String.fromCodePoint(parseInt(h, 16)))
+      .replace(/&#(\d+);/g, (m, d) => String.fromCodePoint(+d)).replace(/&amp;/g, "&");
+  }
+  async function parseXLSX(bytes) {
+    const z = await openZip(new Blob([bytes]));
+    const find = n => z.entries.find(e => e.name.toLowerCase() === n.toLowerCase());
+    const get = async n => { const e = find(n); return e ? new TextDecoder("utf-8").decode(await z.read(e)) : null; };
+    const wb = await get("xl/workbook.xml");
+    if (!wb) throw new Error("This .xlsx has no workbook inside.");
+    const rels = (await get("xl/_rels/workbook.xml.rels")) || "";
+    const sheetTag = wb.match(/<(?:\w+:)?sheet\b[^>]*>/);
+    let target = "xl/worksheets/sheet1.xml";
+    if (sheetTag) {
+      const rid = (sheetTag[0].match(/r:id="([^"]+)"/) || [])[1];
+      if (rid) {
+        const rel = rels.match(new RegExp(`<Relationship\\b[^>]*Id="${rid}"[^>]*>`));
+        const t = rel && (rel[0].match(/Target="([^"]+)"/) || [])[1];
+        if (t) target = t.startsWith("/") ? t.slice(1) : "xl/" + t.replace(/^\.\//, "");
+      }
+    }
+    const ssXml = (await get("xl/sharedStrings.xml")) || "";
+    const shared = [];
+    ssXml.replace(/<(?:\w+:)?si\b[^>]*>([\s\S]*?)<\/(?:\w+:)?si>/g, (m, inner) => {
+      let s = ""; inner.replace(/<(?:\w+:)?t\b[^>]*>([\s\S]*?)<\/(?:\w+:)?t>/g, (m2, t) => { s += t; return ""; });
+      shared.push(xmlUnescape(s)); return "";
+    });
+    const sheet = await get(target);
+    if (!sheet) throw new Error("Couldn't find the first sheet in this .xlsx.");
+    const rows = [];
+    const colIdx = ref => { const L = ref.replace(/\d+/g, ""); let n = 0; for (const ch of L) n = n * 26 + (ch.charCodeAt(0) - 64); return n - 1; };
+    sheet.replace(/<(?:\w+:)?row\b[^>]*>([\s\S]*?)<\/(?:\w+:)?row>/g, (m, inner) => {
+      const row = [];
+      inner.replace(/<(?:\w+:)?c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/(?:\w+:)?c>)/g, (m2, attrs, body) => {
+        const r = (attrs.match(/\br="([A-Z]+\d+)"/) || [])[1];
+        const t = (attrs.match(/\bt="(\w+)"/) || [])[1];
+        let v = "";
+        if (body) {
+          if (t === "inlineStr") { body.replace(/<(?:\w+:)?t\b[^>]*>([\s\S]*?)<\/(?:\w+:)?t>/g, (m3, s) => { v += xmlUnescape(s); return ""; }); }
+          else {
+            const vv = (body.match(/<(?:\w+:)?v>([\s\S]*?)<\/(?:\w+:)?v>/) || [])[1];
+            if (vv !== undefined) v = t === "s" ? (shared[+vv] || "") : xmlUnescape(vv);
+          }
+        }
+        const ci = r ? colIdx(r) : row.length;
+        row[ci] = String(v).trim();
+        return "";
+      });
+      for (let i = 0; i < row.length; i++) if (row[i] === undefined) row[i] = "";
+      if (row.some(x => x !== "")) rows.push(row);
+      return "";
+    });
+    return rows;
+  }
+
+  return { openZip, decodeText, parseCSV, parseXLSX };
+})();
+if (typeof module !== "undefined") module.exports = PokeIO;
+
+/* ---------- poke~pcb: Gerber + Excellon parsing ---------- */
+const PokeGerber = (() => {
+  const f3 = v => { const s = (Math.round(v * 1000) / 1000).toString(); return s === "-0" ? "0" : s; };
+
+  function circlePath(cx, cy, r, ccw = true) {
+    const s = ccw ? 1 : 0;
+    return `M${f3(cx + r)} ${f3(cy)}A${f3(r)} ${f3(r)} 0 1 ${s} ${f3(cx - r)} ${f3(cy)}A${f3(r)} ${f3(r)} 0 1 ${s} ${f3(cx + r)} ${f3(cy)}Z`;
+  }
+  function signedArea(pts) { let a = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; }
+  function polyPath(pts, ccw = true) {
+    if (pts.length < 3) return "";
+    const a = signedArea(pts);
+    if ((a > 0) !== ccw) pts = pts.slice().reverse();
+    return "M" + pts.map(p => `${f3(p[0])} ${f3(p[1])}`).join("L") + "Z";
+  }
+  function rot(p, deg) {
+    if (!deg) return p;
+    const a = deg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+    return [p[0] * c - p[1] * s, p[0] * s + p[1] * c];
+  }
+  function bbGrow(bb, x, y) { if (x < bb[0]) bb[0] = x; if (y < bb[1]) bb[1] = y; if (x > bb[2]) bb[2] = x; if (y > bb[3]) bb[3] = y; }
+  const newBB = () => [Infinity, Infinity, -Infinity, -Infinity];
+
+  /* aperture macro arithmetic: + - x / ( ), $n */
+  function evalExpr(src, vars) {
+    const s = src.replace(/\s+/g, "");
+    let i = 0;
+    const peek = () => s[i];
+    function num() {
+      if (peek() === "$") { i++; let d = ""; while (/\d/.test(peek())) d += s[i++]; return vars[d] || 0; }
+      if (peek() === "(") { i++; const v = add(); if (peek() === ")") i++; return v; }
+      let t = ""; while (i < s.length && /[\d.]/.test(peek())) t += s[i++];
+      return t ? parseFloat(t) : 0;
+    }
+    function unary() { if (peek() === "-") { i++; return -unary(); } if (peek() === "+") { i++; return unary(); } return num(); }
+    function mul() { let v = unary(); while (peek() === "x" || peek() === "X" || peek() === "/") { const o = s[i++]; const r = unary(); v = o === "/" ? v / r : v * r; } return v; }
+    function add() { let v = mul(); while (peek() === "+" || peek() === "-") { const o = s[i++]; const r = mul(); v = o === "+" ? v + r : v - r; } return v; }
+    return add();
+  }
+
+  function macroShape(body, params, u, x, y) {
+    const vars = {}; params.forEach((p, k) => vars[k + 1] = p);
+    let d = ""; const bb = newBB();
+    const put = (pts, on) => {
+      const P = pts.map(p => [x + p[0] * u, y + p[1] * u]);
+      P.forEach(p => bbGrow(bb, p[0], p[1]));
+      d += polyPath(P, on);
+    };
+    for (let raw of body) {
+      raw = raw.trim(); if (!raw) continue;
+      const asg = raw.match(/^\$(\d+)\s*=\s*(.+)$/);
+      if (asg) { vars[asg[1]] = evalExpr(asg[2], vars); continue; }
+      const parts = raw.split(",");
+      const code = parseInt(parts[0], 10);
+      if (code === 0 || isNaN(code)) continue;
+      const a = parts.slice(1).map(t => evalExpr(t, vars));
+      if (code === 1) {
+        const on = a[0] !== 0, r = a[1] / 2; const c = rot([a[2] || 0, a[3] || 0], a[4] || 0);
+        const cx = x + c[0] * u, cy = y + c[1] * u, R = r * u;
+        if (R > 0) { d += circlePath(cx, cy, R, on); bbGrow(bb, cx - R, cy - R); bbGrow(bb, cx + R, cy + R); }
+      } else if (code === 20 || code === 2) {
+        const on = a[0] !== 0, w = a[1], sx = a[2], sy = a[3], ex = a[4], ey = a[5], r = a[6] || 0;
+        const L = Math.hypot(ex - sx, ey - sy) || 1e-9, nx = -(ey - sy) / L * w / 2, ny = (ex - sx) / L * w / 2;
+        put([[sx + nx, sy + ny], [ex + nx, ey + ny], [ex - nx, ey - ny], [sx - nx, sy - ny]].map(p => rot(p, r)), on);
+      } else if (code === 21) {
+        const on = a[0] !== 0, w = a[1], h = a[2], cx = a[3], cy = a[4], r = a[5] || 0;
+        put([[cx - w / 2, cy - h / 2], [cx + w / 2, cy - h / 2], [cx + w / 2, cy + h / 2], [cx - w / 2, cy + h / 2]].map(p => rot(p, r)), on);
+      } else if (code === 22) {
+        const on = a[0] !== 0, w = a[1], h = a[2], lx = a[3], ly = a[4], r = a[5] || 0;
+        put([[lx, ly], [lx + w, ly], [lx + w, ly + h], [lx, ly + h]].map(p => rot(p, r)), on);
+      } else if (code === 4) {
+        const on = a[0] !== 0, n = Math.round(a[1]); const pts = [];
+        for (let k = 0; k <= n; k++) pts.push([a[2 + 2 * k], a[3 + 2 * k]]);
+        const r = a[2 + 2 * (n + 1)] || 0;
+        if (pts.length > 1 && pts[0][0] === pts[pts.length - 1][0] && pts[0][1] === pts[pts.length - 1][1]) pts.pop();
+        put(pts.map(p => rot(p, r)), on);
+      } else if (code === 5) {
+        const on = a[0] !== 0, n = Math.max(3, Math.round(a[1])), cx = a[2], cy = a[3], R = a[4] / 2, r = a[5] || 0;
+        const pts = []; for (let k = 0; k < n; k++) { const t = 2 * Math.PI * k / n; pts.push([cx + R * Math.cos(t), cy + R * Math.sin(t)]); }
+        put(pts.map(p => rot(p, r)), on);
+      } else if (code === 7) {
+        const c = rot([a[0], a[1]], a[5] || 0), cx = x + c[0] * u, cy = y + c[1] * u, ro = a[2] / 2 * u, ri = a[3] / 2 * u;
+        if (ro > 0) { d += circlePath(cx, cy, ro, true); bbGrow(bb, cx - ro, cy - ro); bbGrow(bb, cx + ro, cy + ro); }
+        if (ri > 0) d += circlePath(cx, cy, ri, false);
+      } else if (code === 6) {
+        const c = rot([a[0], a[1]], a[8] || 0), cx = x + c[0] * u, cy = y + c[1] * u, ro = a[2] / 2 * u;
+        if (ro > 0) { d += circlePath(cx, cy, ro, true); bbGrow(bb, cx - ro, cy - ro); bbGrow(bb, cx + ro, cy + ro); }
+      }
+    }
+    return { d, bb };
+  }
+
+  function apertureShape(ap, macros, x, y) {
+    const u = ap.u, p = ap.params;
+    switch (ap.type) {
+      case "C": { const r = (p[0] || 0) * u / 2; if (r <= 0) return null; return { d: circlePath(x, y, r), bb: [x - r, y - r, x + r, y + r] }; }
+      case "R": { const w = (p[0] || 0) * u / 2, h = (p[1] || p[0] || 0) * u / 2; if (w <= 0 || h <= 0) return null;
+        return { d: `M${f3(x - w)} ${f3(y - h)}H${f3(x + w)}V${f3(y + h)}H${f3(x - w)}Z`, bb: [x - w, y - h, x + w, y + h] }; }
+      case "O": {
+        const w = (p[0] || 0) * u, h = (p[1] || p[0] || 0) * u; if (w <= 0 || h <= 0) return null;
+        let d;
+        if (Math.abs(w - h) < 1e-9) return { d: circlePath(x, y, w / 2), bb: [x - w / 2, y - h / 2, x + w / 2, y + h / 2] };
+        if (w > h) { const r = h / 2, a = w / 2 - r;
+          d = `M${f3(x - a)} ${f3(y - r)}H${f3(x + a)}A${f3(r)} ${f3(r)} 0 0 1 ${f3(x + a)} ${f3(y + r)}H${f3(x - a)}A${f3(r)} ${f3(r)} 0 0 1 ${f3(x - a)} ${f3(y - r)}Z`;
+        } else { const r = w / 2, a = h / 2 - r;
+          d = `M${f3(x + r)} ${f3(y - a)}V${f3(y + a)}A${f3(r)} ${f3(r)} 0 0 1 ${f3(x - r)} ${f3(y + a)}V${f3(y - a)}A${f3(r)} ${f3(r)} 0 0 1 ${f3(x + r)} ${f3(y - a)}Z`; }
+        return { d, bb: [x - w / 2, y - h / 2, x + w / 2, y + h / 2] };
+      }
+      case "P": {
+        const R = (p[0] || 0) * u / 2, n = Math.max(3, Math.round(p[1] || 3)), r0 = p[2] || 0; if (R <= 0) return null;
+        const pts = []; const bb = newBB();
+        for (let k = 0; k < n; k++) { const t = (r0 + 360 * k / n) * Math.PI / 180; const q = [x + R * Math.cos(t), y + R * Math.sin(t)]; pts.push(q); bbGrow(bb, q[0], q[1]); }
+        return { d: polyPath(pts), bb };
+      }
+      default: {
+        const m = macros[ap.type];
+        if (!m) return null;
+        const s = macroShape(m, p, u, x, y);
+        return s.d ? s : null;
+      }
+    }
+  }
+
+  function arcInfo(x0, y0, x1, y1, cx, cy, ccw) {
+    const r = Math.hypot(x0 - cx, y0 - cy);
+    const a0 = Math.atan2(y0 - cy, x0 - cx), a1 = Math.atan2(y1 - cy, x1 - cx);
+    let sweep = ccw ? a1 - a0 : a0 - a1;
+    while (sweep <= 1e-9) sweep += 2 * Math.PI;
+    const full = Math.abs(x1 - x0) < 1e-7 && Math.abs(y1 - y0) < 1e-7;
+    if (full) sweep = 2 * Math.PI;
+    return { r, a0, sweep, full };
+  }
+  function arcSvg(x0, y0, x1, y1, cx, cy, ccw) {
+    const { r, sweep, full } = arcInfo(x0, y0, x1, y1, cx, cy, ccw);
+    const s = ccw ? 1 : 0;
+    if (r < 1e-9) return `L${f3(x1)} ${f3(y1)}`;
+    if (full) {
+      const px = 2 * cx - x0, py = 2 * cy - y0;
+      return `A${f3(r)} ${f3(r)} 0 0 ${s} ${f3(px)} ${f3(py)}A${f3(r)} ${f3(r)} 0 0 ${s} ${f3(x1)} ${f3(y1)}`;
+    }
+    return `A${f3(r)} ${f3(r)} 0 ${sweep > Math.PI ? 1 : 0} ${s} ${f3(x1)} ${f3(y1)}`;
+  }
+  function arcBB(bb, x0, y0, x1, y1, cx, cy, ccw, pad) {
+    const { r, a0, sweep } = arcInfo(x0, y0, x1, y1, cx, cy, ccw);
+    bbGrow(bb, x0 - pad, y0 - pad); bbGrow(bb, x0 + pad, y0 + pad); bbGrow(bb, x1 - pad, y1 - pad); bbGrow(bb, x1 + pad, y1 + pad);
+    for (let k = 0; k < 4; k++) {
+      const t = k * Math.PI / 2;
+      let rel = ccw ? t - a0 : a0 - t;
+      rel = ((rel % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      if (rel <= sweep) { const px = cx + r * Math.cos(t), py = cy + r * Math.sin(t); bbGrow(bb, px - pad, py - pad); bbGrow(bb, px + pad, py + pad); }
+    }
+  }
+
+  function parseGerber(text) {
+    const fmt = { xi: 2, xd: 6, yi: 2, yd: 6, zero: "L" };
+    let unit = 1;               // mm per file unit (set by MO)
+    const aps = {}, macros = {};
+    let ap = null, x = 0, y = 0, interp = 1, multiQuad = true, pol = "D", lastOp = 1;
+    let region = null;          // {d, bb}
+    const objAttrs = {}, apAttrs = {}, fileAttrs = {};
+    const objs = [];            // {t:'F'|'R'|'S', pol, d, bb, w?, a:attrs, fn?}
+    const warnings = new Set();
+    let strokeBuf = null;       // merges consecutive strokes that share aperture/polarity/attrs
+    const bb = newBB();
+
+    const cval = (s, isX) => {
+      if (s.includes(".")) return parseFloat(s) * unit;
+      const neg = s[0] === "-"; let dg = s.replace(/^[+-]/, "");
+      const i = isX ? fmt.xi : fmt.yi, dd = isX ? fmt.xd : fmt.yd;
+      if (fmt.zero === "T") dg = dg.padEnd(i + dd, "0");
+      const v = parseInt(dg, 10) / Math.pow(10, dd);
+      return (neg ? -v : v) * unit;
+    };
+    const attrsNow = () => {
+      const a = {};
+      if (objAttrs.P) a.P = objAttrs.P;
+      if (objAttrs.N) a.N = objAttrs.N;
+      if (objAttrs.C) a.C = objAttrs.C;
+      return a;
+    };
+    function doAttr(cmd) {
+      // cmd like "TO.P,R1,1,GND" | "TF.FileFunction,Copper,L1,Top" | "TA.AperFunction,SMDPad,CuDef" | "TD" | "TD.P"
+      if (cmd.startsWith("TF.")) { const p = cmd.slice(3).split(","); fileAttrs[p[0]] = p.slice(1); }
+      else if (cmd.startsWith("TA.")) { const p = cmd.slice(3).split(","); apAttrs[p[0]] = p.slice(1); }
+      else if (cmd.startsWith("TO.")) { const p = cmd.slice(3).split(","); objAttrs[p[0]] = p.slice(1).map(v => v.replace(/\\u([0-9a-fA-F]{4})/g, (m, h) => String.fromCharCode(parseInt(h, 16)))); }
+      else if (cmd.startsWith("TD")) {
+        const n = cmd.slice(2).replace(/^\./, "");
+        if (!n) { for (const k in objAttrs) delete objAttrs[k]; for (const k in apAttrs) delete apAttrs[k]; }
+        else { delete objAttrs[n]; delete apAttrs[n]; }
+      }
+    }
+    function flushStroke() { if (strokeBuf) { objs.push(strokeBuf); strokeBuf = null; } }
+    function doExtended(body) {
+      if (body.startsWith("AM")) {
+        const parts = body.split("*");
+        const name = parts[0].slice(2).trim();
+        macros[name] = parts.slice(1).map(s => s.trim()).filter(Boolean);
+        return;
+      }
+      for (let cmd of body.split("*")) {
+        cmd = cmd.trim(); if (!cmd) continue;
+        if (cmd.startsWith("FS")) {
+          const m = cmd.match(/^FS([LT])?([AI])?.*?X(\d)(\d)Y(\d)(\d)/);
+          if (m) { fmt.zero = m[1] || "L"; fmt.xi = +m[3]; fmt.xd = +m[4]; fmt.yi = +m[5]; fmt.yd = +m[6]; if (m[2] === "I") warnings.add("incremental coordinates"); }
+        } else if (cmd.startsWith("MO")) { unit = cmd.includes("IN") ? 25.4 : 1; }
+        else if (cmd.startsWith("AD")) {
+          const m = cmd.match(/^ADD(\d+)([A-Za-z_.$][^,]*)(?:,(.*))?$/);
+          if (m) {
+            const params = m[3] ? m[3].split("X").map(s => parseFloat(s)) : [];
+            aps[+m[1]] = { type: m[2], params, u: unit, fn: apAttrs.AperFunction ? apAttrs.AperFunction.join(",") : "" };
+          }
+        } else if (cmd.startsWith("LP")) { flushStroke(); pol = cmd[2] === "C" ? "C" : "D"; }
+        else if (cmd.startsWith("T")) { flushStroke(); doAttr(cmd); }
+        else if (cmd.startsWith("SR")) { if (/X[2-9]|X\d\d|Y[2-9]|Y\d\d/.test(cmd)) warnings.add("step-and-repeat blocks (panel) not expanded"); }
+      }
+    }
+    function doWord(w) {
+      if (w.startsWith("G04")) {
+        const m = w.match(/^G04\s*#@!\s*(.*)$/);
+        if (m) { flushStroke(); doAttr(m[1].trim()); }
+        return;
+      }
+      if (/^M0[0-2]$/.test(w)) return;
+      let s = w;
+      if (s.startsWith("G54") || s.startsWith("G55")) s = s.slice(3);
+      if (s === "G36") { flushStroke(); region = { d: "", bb: newBB(), open: false }; return; }
+      if (s === "G37") {
+        if (region && region.d) objs.push({ t: "R", pol, d: region.d + (region.open ? "Z" : ""), bb: region.bb, a: attrsNow() });
+        region = null; return;
+      }
+      if (s === "G74") { multiQuad = false; return; }
+      if (s === "G75") { multiQuad = true; return; }
+      if (s === "G70") { unit = 25.4; return; }
+      if (s === "G71") { unit = 1; return; }
+      if (/^G9[01]$/.test(s)) return;
+      const sel = s.match(/^(?:G0?([123]))?D(\d{2,})$/);
+      if (sel && +sel[2] >= 10) { if (sel[1]) interp = +sel[1]; flushStroke(); ap = aps[+sel[2]] || null; return; }
+      const m = s.match(/^(?:G0?([123]))?(?:X([+-]?[\d.]+))?(?:Y([+-]?[\d.]+))?(?:I([+-]?[\d.]+))?(?:J([+-]?[\d.]+))?(?:D0*([123]))?$/);
+      if (!m) return;
+      if (m[1]) interp = +m[1];
+      if (!m[2] && !m[3] && !m[6]) return;
+      const nx = m[2] !== undefined ? cval(m[2], true) : x;
+      const ny = m[3] !== undefined ? cval(m[3], false) : y;
+      let i = m[4] !== undefined ? cval(m[4], true) : 0, j = m[5] !== undefined ? cval(m[5], false) : 0;
+      const op = m[6] ? +m[6] : lastOp;
+      lastOp = op;
+      let cx = x + i, cy = y + j;
+      if (interp !== 1 && !multiQuad && op === 1) {
+        // single-quadrant: choose signs of I/J
+        let best = null;
+        for (const si of [1, -1]) for (const sj of [1, -1]) {
+          const ccx = x + si * Math.abs(i), ccy = y + sj * Math.abs(j);
+          const err = Math.abs(Math.hypot(x - ccx, y - ccy) - Math.hypot(nx - ccx, ny - ccy));
+          const inf = arcInfo(x, y, nx, ny, ccx, ccy, interp === 3);
+          if (inf.sweep <= Math.PI / 2 + 1e-6 && (!best || err < best.err)) best = { err, ccx, ccy };
+        }
+        if (best) { cx = best.ccx; cy = best.ccy; }
+      }
+      if (region) {
+        if (op === 2) { if (region.open) region.d += "Z"; region.d += `M${f3(nx)} ${f3(ny)}`; region.open = true; bbGrow(region.bb, nx, ny); }
+        else if (op === 1) {
+          if (!region.open) { region.d += `M${f3(x)} ${f3(y)}`; region.open = true; bbGrow(region.bb, x, y); }
+          if (interp === 1) region.d += `L${f3(nx)} ${f3(ny)}`;
+          else { region.d += arcSvg(x, y, nx, ny, cx, cy, interp === 3); arcBB(region.bb, x, y, nx, ny, cx, cy, interp === 3, 0); }
+          bbGrow(region.bb, nx, ny);
+        }
+        bbGrow(bb, nx, ny);
+      } else if (op === 3) {
+        flushStroke();
+        if (ap) {
+          const sh = apertureShape(ap, macros, nx, ny);
+          if (sh) {
+            objs.push({ t: "F", pol, d: sh.d, bb: sh.bb, a: attrsNow(), fn: ap.fn, ap: ap.type });
+            bbGrow(bb, sh.bb[0], sh.bb[1]); bbGrow(bb, sh.bb[2], sh.bb[3]);
+          }
+        }
+      } else if (op === 1 && ap) {
+        const w = ap.type === "C" ? (ap.params[0] || 0) * ap.u : ap.type === "R" || ap.type === "O" ? Math.min(ap.params[0] || 0, ap.params[1] || ap.params[0] || 0) * ap.u : 0.1;
+        const seg = interp === 1 ? `L${f3(nx)} ${f3(ny)}` : arcSvg(x, y, nx, ny, cx, cy, interp === 3);
+        const a = attrsNow();
+        const key = w + "|" + pol + "|" + (a.C || "") + "|" + (a.P || "") + "|" + (a.N || "");
+        if (strokeBuf && strokeBuf.key === key && strokeBuf.ex === x && strokeBuf.ey === y) strokeBuf.d += seg;
+        else { flushStroke(); strokeBuf = { t: "S", pol, w: Math.max(w, 0.01), d: `M${f3(x)} ${f3(y)}` + seg, bb: newBB(), a, key, segs: [] }; bbGrow(strokeBuf.bb, x, y); }
+        if (interp === 1) strokeBuf.segs.push([x, y, nx, ny]);
+        else { const inf = arcInfo(x, y, nx, ny, cx, cy, interp === 3); strokeBuf.segs.push([x, y, nx, ny, inf.r, inf.sweep > Math.PI ? 1 : 0, interp === 3 ? 1 : 0, inf.full ? 1 : 0, cx, cy]); }
+        strokeBuf.ex = nx; strokeBuf.ey = ny;
+        bbGrow(strokeBuf.bb, nx, ny);
+        if (interp !== 1) arcBB(strokeBuf.bb, x, y, nx, ny, cx, cy, interp === 3, 0);
+        const h = w / 2; bbGrow(bb, Math.min(x, nx) - h, Math.min(y, ny) - h); bbGrow(bb, Math.max(x, nx) + h, Math.max(y, ny) + h);
+      }
+      x = nx; y = ny;
+    }
+
+    // tokenise
+    const n = text.length;
+    let k = 0;
+    while (k < n) {
+      const c = text[k];
+      if (c === "%") {
+        const e = text.indexOf("%", k + 1);
+        if (e < 0) break;
+        doExtended(text.slice(k + 1, e).replace(/[\r\n]+/g, ""));
+        k = e + 1;
+      } else if (c === "\r" || c === "\n" || c === " " || c === "\t") { k++; }
+      else {
+        const e = text.indexOf("*", k);
+        if (e < 0) break;
+        const w = text.slice(k, e);
+        doWord(w.startsWith("G04") ? w.replace(/[\r\n]+/g, " ").trim() : w.replace(/\s+/g, ""));
+        k = e + 1;
+      }
+    }
+    flushStroke();
+    objs.forEach(o => { delete o.key; delete o.ex; delete o.ey; });
+    return { objs, fileAttrs, bb, warnings: [...warnings], unit };
+  }
+
+  /* ---------- Excellon ---------- */
+  function parseDrill(text) {
+    let unit = 1, zeros = "", inHeader = false, fnNext = "", fileFn = "";
+    let fmtInt = 3, fmtDec = 3;
+    const tools = {}; let tool = null, x = 0, y = 0, route = false, routeStart = null;
+    const holes = [], slots = [];
+    const num = (s, isInch) => {
+      if (s.includes(".")) return parseFloat(s) * unit;
+      const neg = s[0] === "-"; let d = s.replace(/^[+-]/, "");
+      const dec = unit === 25.4 ? 4 : fmtDec, int = unit === 25.4 ? 2 : fmtInt;
+      let v;
+      if (zeros === "LZ") v = parseInt(d.padEnd(int + dec, "0"), 10) / Math.pow(10, dec);
+      else v = parseInt(d, 10) / Math.pow(10, dec);
+      return (neg ? -v : v) * unit;
+    };
+    for (let raw of text.split(/\r?\n/)) {
+      const line = raw.trim();
+      if (!line) continue;
+      if (line.startsWith(";")) {
+        const m = line.match(/#@!\s*TA\.AperFunction,(.*)$/); if (m) fnNext = m[1];
+        const f = line.match(/#@!\s*TF\.FileFunction,(.*)$/); if (f) fileFn = f[1];
+        const fm = line.match(/FORMAT=\{(\d+):(\d+)/); if (fm) { fmtInt = +fm[1]; fmtDec = +fm[2]; }
+        continue;
+      }
+      if (line === "M48") { inHeader = true; continue; }
+      if (line === "%" || line === "M95") { inHeader = false; continue; }
+      if (/^(INCH|METRIC)/.test(line)) {
+        unit = line.startsWith("INCH") ? 25.4 : 1;
+        if (line.includes("LZ")) zeros = "LZ"; else if (line.includes("TZ")) zeros = "TZ";
+        const m = line.match(/,0*(\d+)\.(\d+)/); if (m) { fmtInt = m[1].length || fmtInt; fmtDec = m[2].length; }
+        continue;
+      }
+      if (line === "M71") { unit = 1; continue; }
+      if (line === "M72") { unit = 25.4; continue; }
+      let m = line.match(/^T(\d+)(?:F\d+)?(?:S\d+)?C([\d.]+)/);
+      if (m) { tools[+m[1]] = { d: parseFloat(m[2]) * unit, fn: fnNext }; fnNext = ""; if (!inHeader) tool = tools[+m[1]]; continue; }
+      m = line.match(/^T(\d+)$/);
+      if (m) { tool = tools[+m[1]] || null; continue; }
+      if (line === "M15") { route = true; continue; }
+      if (line === "M16" || line === "M17") { route = false; continue; }
+      if (line.startsWith("G05") || line.startsWith("G90")) { route = false; continue; }
+      const mx = line.match(/X([+-]?[\d.]+)/), my = line.match(/Y([+-]?[\d.]+)/);
+      if (!mx && !my) continue;
+      const g85 = line.match(/^(.*?)G85X([+-]?[\d.]+)Y([+-]?[\d.]+)/);
+      if (g85 && tool) {
+        const ax = g85[1].match(/X([+-]?[\d.]+)/), ay = g85[1].match(/Y([+-]?[\d.]+)/);
+        const sx = ax ? num(ax[1]) : x, sy = ay ? num(ay[1]) : y, ex = num(g85[2]), ey = num(g85[3]);
+        slots.push({ x1: sx, y1: sy, x2: ex, y2: ey, d: tool.d, fn: tool.fn });
+        x = ex; y = ey; continue;
+      }
+      const nx = mx ? num(mx[1]) : x, ny = my ? num(my[1]) : y;
+      if (line.startsWith("G00")) { routeStart = [nx, ny]; x = nx; y = ny; continue; }
+      if (line.startsWith("G01") && route && routeStart && tool) {
+        slots.push({ x1: x, y1: y, x2: nx, y2: ny, d: tool.d, fn: tool.fn });
+        x = nx; y = ny; continue;
+      }
+      if (tool && !route) holes.push({ x: nx, y: ny, d: tool.d, fn: tool.fn });
+      x = nx; y = ny;
+    }
+    const npth = /NonPlated|NPTH/i.test(fileFn);
+    return { holes, slots, npth, fileFn };
+  }
+
+  return { parseGerber, parseDrill, f3, newBB, bbGrow };
+})();
+if (typeof module !== "undefined") module.exports = PokeGerber;
+
+/* ---------- poke~pcb: project builder ---------- */
+const PokeBoard = (() => {
+  const { parseGerber, parseDrill, f3, newBB, bbGrow } = PokeGerber;
+  const IO = PokeIO;
+
+  /* ---------- layer identification ---------- */
+  const EXT_ROLE = {
+    gtl: "cu-top", gbl: "cu-bot", gts: "mask-top", gbs: "mask-bot", gto: "silk-top", gbo: "silk-bot",
+    gtp: "paste-top", gbp: "paste-bot", gko: "outline", gm1: "outline", gml: "outline", gm: "outline",
+    cmp: "cu-top", sol: "cu-bot", stc: "mask-top", sts: "mask-bot", plc: "silk-top", pls: "silk-bot",
+    crc: "paste-top", crs: "paste-bot", dim: "outline", mil: "outline", oln: "outline", out: "outline",
+  };
+  const DRILL_EXT = new Set(["drl", "xln", "exc", "drd", "nc", "tap", "drill"]);
+  const GERBER_EXT = new Set(["gbr", "ger", "pho", "art", "gbx", "gerber"]);
+  function roleFromName(path) {
+    const base = path.split("/").pop();
+    const lower = base.toLowerCase();
+    const ext = lower.includes(".") ? lower.split(".").pop() : "";
+    const stem = lower.replace(/\.[^.]+$/, "");
+    if (EXT_ROLE[ext]) return EXT_ROLE[ext];
+    if (/^g\d+$|^gl\d+$|^g\d+l$|^gp\d+$|^ly\d+$|^in\d+$/.test(ext)) return "cu-in";
+    if (/^gm\d+$/.test(ext)) return "mech";
+    const s = stem.replace(/[\s.\-]+/g, "_");
+    const tests = [
+      [/(^|_)f_cu$|toplayer$|top_?copper$|copper_top|_top_?layer$|^top$/, "cu-top"],
+      [/(^|_)b_cu$|bottomlayer$|bottom_?copper$|copper_bottom|_bottom_?layer$|^bottom$/, "cu-bot"],
+      [/(^|_)in\d+_cu$|inner_?\d+|innerlayer\d*|_l\d+$/, "cu-in"],
+      [/(^|_)f_mask$|topsoldermask|top_?solder_?mask|soldermask_top|topmask|_tsm$/, "mask-top"],
+      [/(^|_)b_mask$|bottomsoldermask|bottom_?solder_?mask|soldermask_bottom|bottommask|_bsm$/, "mask-bot"],
+      [/(^|_)f_silk(s|screen)?$|topsilk|top_?silk|silkscreen_top|toplegend|_tsk$/, "silk-top"],
+      [/(^|_)b_silk(s|screen)?$|bottomsilk|bottom_?silk|silkscreen_bottom|bottomlegend|_bsk$/, "silk-bot"],
+      [/(^|_)f_paste$|toppaste|top_?paste|paste_top|_tsp$/, "paste-top"],
+      [/(^|_)b_paste$|bottompaste|bottom_?paste|paste_bottom|_bsp$/, "paste-bot"],
+      [/edge_cuts$|boardoutline|board_?outline|outline$|profile$|edges?$|contour/, "outline"],
+    ];
+    for (const [re, r] of tests) if (re.test(s)) return r;
+    return null;
+  }
+  function roleFromFF(ff) {
+    if (!ff) return null;
+    const [kind, a, b] = ff.split(",");
+    const k = (kind || "").toLowerCase();
+    if (k === "copper") { const side = (b || "").toLowerCase(); return side.startsWith("top") ? "cu-top" : side.startsWith("bot") ? "cu-bot" : "cu-in"; }
+    const side = (a || "").toLowerCase().startsWith("bot") ? "bot" : "top";
+    if (k === "soldermask") return "mask-" + side;
+    if (k === "legend") return "silk-" + side;
+    if (k === "paste") return "paste-" + side;
+    if (k === "profile") return "outline";
+    return "other";
+  }
+  function sniffFF(text) {
+    const m = text.slice(0, 4000).match(/(?:%|#@!\s*)TF\.FileFunction,([^*%\r\n]+)/);
+    return m ? m[1] : null;
+  }
+  const looksGerber = t => /%FS[LT]?[AI]?/.test(t.slice(0, 6000)) || (/\bD0?[123]\*/.test(t.slice(0, 20000)) && /\*/.test(t.slice(0, 200)));
+  const looksDrill = t => /^\s*(;.*\r?\n\s*)*M48/.test(t.slice(0, 3000)) || /(^|\n)T\d+C[\d.]+/.test(t.slice(0, 4000)) && /(^|\n)X[+-]?[\d.]+Y/.test(t.slice(0, 20000));
+
+  /* ---------- table helpers ---------- */
+  const norm = s => String(s || "").toLowerCase().replace(/[\s_#().:\-\/]+/g, " ").trim();
+  function findHeader(rows, need) {
+    for (let r = 0; r < Math.min(rows.length, 20); r++) {
+      const h = rows[r].map(norm);
+      const idx = need(h);
+      if (idx) return { r, idx };
+    }
+    return null;
+  }
+  const colOf = (h, res) => { for (const re of res) { const i = h.findIndex(c => re.test(c)); if (i >= 0) return i; } return -1; };
+  const DES = [/^designators?$/, /^references?$/, /^ref$/, /^refs$/, /^refdes$/, /^ref ?des(ignators?)?$/, /^reference designators?$/, /^part references?$/, /^designation$/, /^位号$/];
+  const VAL = [/^comment$/, /^value$/, /^val$/, /^values$/, /^description$/, /^part$/, /^part ?number$/, /^mpn$/, /^name$/, /^manufacturer part( number)?$/];
+  const FTP = [/^footprint$/, /^package$/, /^footprint name$/, /^pattern$/, /^case$/, /^package case$/, /^封装$/];
+  const LCSC = [/lcsc/, /^jlcpcb part/, /^jlc part/, /^supplier part/, /^jlcpcb$/];
+  const QTY = [/^qty$/, /^quantity$/, /^count$/];
+  const CX = [/^mid x$/, /^center x$/, /^pos ?x$/, /^posx$/, /^x$/, /^ref x$/, /^x mm$/, /^x mil$/, /^location x$/, /^center-x$/];
+  const CY = [/^mid y$/, /^center y$/, /^pos ?y$/, /^posy$/, /^y$/, /^ref y$/, /^y mm$/, /^y mil$/, /^location y$/];
+  const ROT = [/^rotation$/, /^rot$/, /^angle$/, /^rotate$/, /^orientation$/];
+  const SIDE = [/^layer$/, /^side$/, /^tb$/, /^t b$/, /^top bottom$/, /^mount side$/];
+
+  function classifyTable(rows) {
+    const cpl = findHeader(rows, h => { const d = colOf(h, DES), x = colOf(h, CX), y = colOf(h, CY); return d >= 0 && x >= 0 && y >= 0 ? { d, x, y, rot: colOf(h, ROT), side: colOf(h, SIDE), val: colOf(h, [/^val$/, /^value$/, /^comment$/]), pkg: colOf(h, [/^package$/, /^footprint$/]) } : null; });
+    if (cpl) return { kind: "cpl", r: cpl.r, ...cpl.idx };
+    const bom = findHeader(rows, h => { const d = colOf(h, DES); if (d < 0) return null; const v = colOf(h, VAL), f = colOf(h, FTP), l = colOf(h, LCSC); return v >= 0 || l >= 0 || f >= 0 ? { d, v, f, l, q: colOf(h, QTY) } : null; });
+    if (bom) return { kind: "bom", r: bom.r, ...bom.idx };
+    return null;
+  }
+  function splitRefs(s) {
+    const out = [];
+    for (let t of String(s || "").split(/[\s,;]+/)) {
+      t = t.trim(); if (!t) continue;
+      const m = t.match(/^([A-Za-z_]+)(\d+)\s*-\s*(?:([A-Za-z_]+))?(\d+)$/);
+      if (m && (!m[3] || m[3] === m[1]) && +m[4] >= +m[2] && +m[4] - +m[2] < 500) { for (let k = +m[2]; k <= +m[4]; k++) out.push(m[1] + k); }
+      else out.push(t);
+    }
+    return out;
+  }
+
+  /* ---------- scanning dropped inputs ---------- */
+  async function scan(inputs, onStep) {
+    const files = [];
+    const notes = [];
+    async function addZip(blob, prefix, depth) {
+      let z;
+      try { z = await IO.openZip(blob); } catch (e) { notes.push({ level: "warn", text: `${prefix.replace(/\/$/, "")}: ${e.message}` }); return; }
+      for (const e of z.entries) {
+        const path = prefix + e.name;
+        if (/\.zip$/i.test(e.name) && depth < 3) {
+          if (e.usize > 80e6) { notes.push({ level: "info", text: `Skipped ${path} (too large).` }); continue; }
+          const b = await z.read(e);
+          await addZip(new Blob([b]), path + "/", depth + 1);
+          continue;
+        }
+        files.push({ path, size: e.usize, get: () => z.read(e) });
+      }
+    }
+    for (const f of inputs) {
+      onStep && onStep(`Reading ${f.name}`);
+      if (/\.zip$/i.test(f.name)) await addZip(f.blob, f.name + "/", 0);
+      else files.push({ path: f.path || f.name, size: f.blob.size, get: async () => new Uint8Array(await f.blob.arrayBuffer()) });
+    }
+    const groups = new Map();
+    const boms = [], cpls = [];
+    let order = null;
+    let bigSkipped = 0;
+    for (const f of files) {
+      const base = f.path.split("/").pop();
+      const lower = base.toLowerCase();
+      const ext = lower.includes(".") ? lower.split(".").pop() : "";
+      const dir = f.path.slice(0, f.path.length - base.length);
+      if (!base || base.startsWith(".") || /__macosx/i.test(f.path)) continue;
+      if (ext === "pdf") { if (/bom|bill/i.test(base)) notes.push({ level: "warn", text: `${base} is a PDF. poke~pcb reads BOMs as CSV or XLSX, so export it in one of those formats.` }); continue; }
+      if (["tgz", "gz", "rar", "7z", "ddw", "png", "jpg", "jpeg", "step", "stp", "wrl", "kicad_pcb", "kicad_sch", "pcbdoc", "schdoc", "brd", "sch"].includes(ext)) continue;
+      if (f.size > 25e6 || (ext === "" && f.size > 3e6)) { bigSkipped++; continue; }
+      if (ext === "json") {
+        try {
+          const t = IO.decodeText(await f.get(), "gbk"); const j = JSON.parse(t);
+          if (j && (j.color_sm !== undefined || j.po !== undefined || j.layers !== undefined)) order = parseOrder(j, f.path);
+        } catch (e) { }
+        continue;
+      }
+      if (ext === "xls") { notes.push({ level: "warn", text: `${base} is an old .xls file. Save it as .xlsx or CSV and drop it again.` }); continue; }
+      if (["csv", "tsv", "xlsx"].includes(ext) || (ext === "txt" && f.size < 5e6)) {
+        const bytes = await f.get();
+        if (ext === "txt") { const t = IO.decodeText(bytes); if (looksDrill(t)) { addLayer(groups, dir, { path: f.path, role: "drill", text: t }); continue; } }
+        let rows;
+        try { rows = ext === "xlsx" ? await IO.parseXLSX(bytes) : IO.parseCSV(IO.decodeText(bytes)); } catch (e) { notes.push({ level: "warn", text: `Couldn't read ${base}: ${e.message}` }); continue; }
+        const c = classifyTable(rows);
+        if (c && c.kind === "cpl") cpls.push({ path: f.path, name: base, rows, h: c });
+        else if (c && c.kind === "bom") boms.push({ path: f.path, name: base, rows, h: c });
+        continue;
+      }
+      const byName = roleFromName(f.path);
+      if (!byName && !DRILL_EXT.has(ext) && !GERBER_EXT.has(ext) && ext !== "" && !/^g/.test(ext)) continue;
+      const bytes = await f.get();
+      const text = IO.decodeText(bytes);
+      if (DRILL_EXT.has(ext) || (!byName && looksDrill(text) && !looksGerber(text))) {
+        if (looksDrill(text)) addLayer(groups, dir, { path: f.path, role: "drill", text });
+        continue;
+      }
+      if (!looksGerber(text)) continue;
+      const ff = sniffFF(text);
+      const role = roleFromFF(ff) || byName || "other";
+      addLayer(groups, dir, { path: f.path, role, text, ff, tool: (text.slice(0, 3000).match(/GenerationSoftware,([^*%\r\n]+)/) || [])[1] || (text.slice(0, 600).match(/output software:\s*([^*\r\n]+)/) || [])[1] || "" });
+    }
+    if (bigSkipped) notes.push({ level: "info", text: `Skipped ${bigSkipped} very large file${bigSkipped > 1 ? "s" : ""} (panel data from the factory). Your original gerbers are used instead.` });
+    // pick the best gerber set
+    let best = null;
+    for (const [dir, g] of groups) {
+      const roles = new Set(g.layers.map(l => l.role));
+      const panelish = g.layers.some(l => /jlccam|genesis|ucam/i.test(l.tool || ""));
+      let score = (roles.has("cu-top") ? 4 : 0) + (roles.has("cu-bot") ? 2 : 0) + (roles.has("outline") ? 2 : 0) + (roles.has("mask-top") ? 1 : 0) + (roles.has("silk-top") ? 1 : 0) + (roles.has("paste-top") ? 1 : 0) + (g.drills.length ? 1 : 0) + (g.layers.some(l => l.ff) ? 1 : 0);
+      if (panelish) score -= 6;
+      if (!roles.has("cu-top") && !roles.has("cu-bot")) continue;
+      if (!best || score > best.score) best = { dir, score, ...g };
+    }
+    return { set: best, boms, cpls, order, notes };
+  }
+  function addLayer(groups, dir, layer) {
+    if (!groups.has(dir)) groups.set(dir, { layers: [], drills: [] });
+    const g = groups.get(dir);
+    if (layer.role === "drill") g.drills.push(layer); else g.layers.push(layer);
+  }
+
+  function parseOrder(j, path) {
+    const s = v => (v === undefined || v === null) ? "" : String(v);
+    const mask = s(j.color_sm), silk = s(j.color_ss), fin = s(j.finished);
+    const col = t => /绿|green/i.test(t) ? "green" : /红|red/i.test(t) ? "red" : /黄|yellow/i.test(t) ? "yellow" : /蓝|blue/i.test(t) ? "blue" : /白|white/i.test(t) ? "white" : /紫|purple/i.test(t) ? "purple" : /黑|black/i.test(t) ? "black" : "";
+    const finish = /沉金|enig|gold/i.test(fin) ? "enig" : /osp/i.test(fin) ? "osp" : /喷锡|hasl/i.test(fin) ? "hasl" : "";
+    const finishLabel = /无铅|lead.?free/i.test(fin) ? "lead-free HASL" : /有铅/.test(fin) ? "leaded HASL" : finish === "enig" ? "ENIG" : finish === "osp" ? "OSP" : finish === "hasl" ? "HASL" : "";
+    return { path, po: s(j.po), mask: col(mask), silk: col(silk), finish, finishLabel, thickness: j.thickness ? Math.round(j.thickness * 100) / 100 : null, layers: j.layers || null, name: s(j.pcbFileName) };
+  }
+
+  /* ---------- outline ---------- */
+  function buildOutline(objs) {
+    const segs = [];
+    for (const o of objs) if (o.t === "S" && o.segs) for (const s of o.segs) segs.push(s);
+    const loops = [];
+    const rest = [];
+    for (const s of segs) {
+      if (s.length > 4 && s[7]) { loops.push({ d: `M${f3(s[0])} ${f3(s[1])}` + arcD(s, false) + "Z", area: Math.PI * s[4] * s[4], pts: [] }); }
+      else rest.push(s);
+    }
+    const key = (x, y) => Math.round(x * 200) + "," + Math.round(y * 200);
+    const used = new Array(rest.length).fill(false);
+    const ends = new Map();
+    rest.forEach((s, i) => { for (const k of [key(s[0], s[1]), key(s[2], s[3])]) { if (!ends.has(k)) ends.set(k, []); ends.get(k).push(i); } });
+    for (let i = 0; i < rest.length; i++) {
+      if (used[i]) continue;
+      used[i] = true;
+      const startK = key(rest[i][0], rest[i][1]);
+      let d = `M${f3(rest[i][0])} ${f3(rest[i][1])}` + (rest[i].length > 4 ? arcD(rest[i], false) : `L${f3(rest[i][2])} ${f3(rest[i][3])}`);
+      const pts = [[rest[i][0], rest[i][1]], [rest[i][2], rest[i][3]]];
+      let cur = [rest[i][2], rest[i][3]];
+      let closed = key(cur[0], cur[1]) === startK;
+      let guard = 0;
+      while (!closed && guard++ < 100000) {
+        const cand = (ends.get(key(cur[0], cur[1])) || []).find(j => !used[j]);
+        if (cand === undefined) break;
+        used[cand] = true;
+        const s = rest[cand];
+        const fwd = key(s[0], s[1]) === key(cur[0], cur[1]);
+        if (s.length > 4) d += arcD(s, !fwd); else d += `L${f3(fwd ? s[2] : s[0])} ${f3(fwd ? s[3] : s[1])}`;
+        cur = fwd ? [s[2], s[3]] : [s[0], s[1]];
+        pts.push(cur);
+        closed = key(cur[0], cur[1]) === startK;
+      }
+      if (closed && pts.length >= 3) {
+        let a = 0; for (let k = 0; k < pts.length; k++) { const p = pts[k], q = pts[(k + 1) % pts.length]; a += p[0] * q[1] - q[0] * p[1]; }
+        loops.push({ d: d + "Z", area: Math.abs(a / 2), pts });
+      }
+    }
+    loops.sort((a, b) => b.area - a.area);
+    return loops;
+  }
+  function arcD(s, reverse) {
+    const [x0, y0, x1, y1, r, large, sweep, full, cx, cy] = s;
+    if (full) { const px = 2 * cx - x0, py = 2 * cy - y0; return `A${f3(r)} ${f3(r)} 0 0 ${sweep} ${f3(px)} ${f3(py)}A${f3(r)} ${f3(r)} 0 0 ${sweep} ${f3(x0)} ${f3(y0)}`; }
+    if (!reverse) return `A${f3(r)} ${f3(r)} 0 ${large} ${sweep} ${f3(x1)} ${f3(y1)}`;
+    return `A${f3(r)} ${f3(r)} 0 ${large} ${sweep ? 0 : 1} ${f3(x0)} ${f3(y0)}`;
+  }
+
+  /* ---------- SVG rendering of a layer (with clear polarity) ---------- */
+  function makeRenderer(bounds, prefix) {
+    let n = 0; const defs = [];
+    const [x0, y0, x1, y1] = bounds; const m = 20;
+    const big = `x="${f3(x0 - m)}" y="${f3(y0 - m)}" width="${f3(x1 - x0 + 2 * m)}" height="${f3(y1 - y0 + 2 * m)}"`;
+    function elems(objs, fc, sc) {
+      let out = "";
+      const byW = new Map();
+      for (const o of objs) {
+        if (o.t === "S") { const k = f3(o.w); byW.set(k, (byW.get(k) || "") + o.d); }
+        else out += `<path class="${fc}" d="${o.d}"/>`;
+      }
+      for (const [w, d] of byW) out += `<path class="${sc}" stroke-width="${w}" d="${d}"/>`;
+      return out;
+    }
+    function render(objs, fc, sc) {
+      let acc = ""; let i = 0;
+      while (i < objs.length) {
+        const dark = []; while (i < objs.length && objs[i].pol !== "C") dark.push(objs[i++]);
+        if (dark.length) acc += elems(dark, fc, sc);
+        const clear = []; while (i < objs.length && objs[i].pol === "C") clear.push(objs[i++]);
+        if (clear.length && acc) {
+          const id = `${prefix}m${n++}`;
+          defs.push(`<mask id="${id}" maskUnits="userSpaceOnUse" ${big}><rect ${big} fill="#fff"/>${elems(clear, "clr-f", "clr-s")}</mask>`);
+          acc = `<g mask="url(#${id})">${acc}</g>`;
+        }
+      }
+      return acc;
+    }
+    return { render, defs, big };
+  }
+
+  /* ---------- components from X2 attributes ---------- */
+  function x2Components(L) {
+    const comps = new Map();
+    const get = ref => { if (!comps.has(ref)) comps.set(ref, { ref, sides: {}, paste: {}, smd: false, tht: false, src: "x2" }); return comps.get(ref); };
+    for (const [role, side] of [["cu-top", "top"], ["cu-bot", "bottom"]]) {
+      const g = L[role]; if (!g) continue;
+      for (const o of g.objs) {
+        if (!o.a.P || o.t === "S") continue;
+        const [ref, pin, name] = o.a.P;
+        const c = get(ref);
+        const s = c.sides[side] || (c.sides[side] = { pads: [], silk: "", bb: newBB() });
+        s.pads.push({ d: o.d, pin: pin || "", name: name || "", net: o.a.N ? o.a.N[0] : "", bb: o.bb });
+        bbGrow(s.bb, o.bb[0], o.bb[1]); bbGrow(s.bb, o.bb[2], o.bb[3]);
+        if (/SMDPad/i.test(o.fn || "")) c.smd = true;
+        if (/ComponentPad/i.test(o.fn || "")) c.tht = true;
+      }
+    }
+    for (const [role, side] of [["paste-top", "top"], ["paste-bot", "bottom"]]) {
+      const g = L[role]; if (!g) continue;
+      for (const o of g.objs) if (o.a.C && comps.has(o.a.C[0])) comps.get(o.a.C[0]).paste[side] = true;
+    }
+    return comps;
+  }
+  function addSilk(comps, L) {
+    for (const [role, side] of [["silk-top", "top"], ["silk-bot", "bottom"]]) {
+      const g = L[role]; if (!g) continue;
+      for (const o of g.objs) {
+        if (!o.a.C || o.pol === "C") continue;
+        const c = comps.get(o.a.C[0]); if (!c || !c.sides[side]) continue;
+        c.sides[side].silk += o.t === "S" ? `<path stroke-width="${f3(o.w)}" d="${o.d}"/>` : `<path class="sf" d="${o.d}"/>`;
+      }
+    }
+  }
+
+  /* ---------- CPL parsing + alignment ---------- */
+  function parseCPL(cpl) {
+    const { rows, h } = cpl; const out = [];
+    const val = (s) => {
+      s = String(s || "").trim(); if (!s) return null;
+      const m = s.match(/^([+-]?[\d.]+)\s*(mm|mil|mils|in|inch)?$/i); if (!m) return null;
+      const v = parseFloat(m[1]); const u = (m[2] || "").toLowerCase();
+      return { v, u: u.startsWith("mil") ? "mil" : u.startsWith("in") ? "in" : u === "mm" ? "mm" : "" };
+    };
+    const headX = norm(rows[h.r][h.x]);
+    for (let r = h.r + 1; r < rows.length; r++) {
+      const row = rows[r]; const ref = (row[h.d] || "").trim(); if (!ref) continue;
+      const X = val(row[h.x]), Y = val(row[h.y]); if (!X || !Y) continue;
+      let unit = X.u || (/mil/.test(headX) ? "mil" : "");
+      const k = unit === "mil" ? 0.0254 : unit === "in" ? 25.4 : 1;
+      const sideRaw = h.side >= 0 ? String(row[h.side] || "").trim().toLowerCase() : "top";
+      const side = /^(b|bot|bottom|back|bottomlayer|bottom layer|b\.cu|b_cu)$/.test(sideRaw) ? "bottom" : "top";
+      const rot = h.rot >= 0 ? parseFloat(String(row[h.rot] || "0")) || 0 : 0;
+      out.push({ ref, x: X.v * k, y: Y.v * k, rot, side, unitKnown: !!unit, val: h.val >= 0 ? row[h.val] : "", pkg: h.pkg >= 0 ? row[h.pkg] : "" });
+    }
+    return out;
+  }
+  // targets: {top:[[x,y]], bottom:[[x,y]]} (gerber coords); returns fn(p) -> [x,y] and score
+  function alignCPL(items, targets, bounds) {
+    if (!items.length) return null;
+    const unitKnown = items.every(i => i.unitKnown);
+    const scales = unitKnown ? [1] : [1, 0.0254, 25.4];
+    const T = { top: targets.top || [], bottom: targets.bottom || [] };
+    const all = T.top.concat(T.bottom);
+    if (!all.length) return null;
+    const tb = newBB(); all.forEach(p => bbGrow(tb, p[0], p[1]));
+    const nearest = (pts, x, y) => { let b = Infinity; for (const p of pts) { const d = (p[0] - x) ** 2 + (p[1] - y) ** 2; if (d < b) b = d; } return Math.sqrt(b); };
+    const sample = items.length > 400 ? items.filter((_, i) => i % Math.ceil(items.length / 400) === 0) : items;
+    let best = null;
+    for (const k of scales) for (const sy of [1, -1]) for (const mx of [false, true]) {
+      if (mx && !items.some(i => i.side === "bottom")) continue;
+      const raw = sample.map(i => { let x = i.x * k, y = i.y * k * sy; if (mx && i.side === "bottom") x = -x; return [x, y, i.side]; });
+      const rb = newBB(); raw.forEach(p => bbGrow(rb, p[0], p[1]));
+      const offs = [[0, 0], [(tb[0] + tb[2]) / 2 - (rb[0] + rb[2]) / 2, (tb[1] + tb[3]) / 2 - (rb[1] + rb[3]) / 2], [tb[0] - rb[0], tb[1] - rb[1]], [bounds[0] - rb[0], bounds[1] - rb[1]], [bounds[0], bounds[1]]];
+      for (const [ox, oy] of offs) {
+        let sc = 0;
+        for (const p of raw) { const d = nearest(T[p[2]].length ? T[p[2]] : all, p[0] + ox, p[1] + oy); sc += Math.exp(-((d / 0.8) ** 2)); }
+        if (!best || sc > best.sc) best = { sc, k, sy, mx, ox, oy };
+      }
+    }
+    // refine: compare each centroid with the centre of the pads right around it
+    const tf = (i, b) => { let x = i.x * b.k, y = i.y * b.k * b.sy; if (b.mx && i.side === "bottom") x = -x; return [x + b.ox, y + b.oy]; };
+    const med = a => { a.sort((p, q) => p - q); return a[a.length >> 1]; };
+    for (let it = 0; it < 4; it++) {
+      const dx = [], dy = [];
+      for (const i of sample) {
+        const [x, y] = tf(i, best); const pts = T[i.side].length ? T[i.side] : all;
+        let n = 0, lx = Infinity, ly = Infinity, hx = -Infinity, hy = -Infinity;
+        for (const p of pts) if (Math.abs(p[0] - x) < 1.0 && Math.abs(p[1] - y) < 1.0) { n++; lx = Math.min(lx, p[0]); hx = Math.max(hx, p[0]); ly = Math.min(ly, p[1]); hy = Math.max(hy, p[1]); }
+        if (n) { dx.push((lx + hx) / 2 - x); dy.push((ly + hy) / 2 - y); }
+      }
+      if (dx.length < 3) break;
+      const mdx = med(dx), mdy = med(dy);
+      if (Math.abs(mdx) < 0.005 && Math.abs(mdy) < 0.005) break;
+      best.ox += mdx; best.oy += mdy;
+    }
+    const matched = sample.filter(i => { const [x, y] = tf(i, best); return nearest(T[i.side].length ? T[i.side] : all, x, y) < 1.5; }).length / sample.length;
+    return { tf: i => tf(i, best), matched, params: best };
+  }
+  function cplComponents(items, L, align, ftpOf) {
+    const comps = new Map();
+    for (const side of ["top", "bottom"]) {
+      const src = L[side === "top" ? "paste-top" : "paste-bot"] || L[side === "top" ? "mask-top" : "mask-bot"];
+      let pads = [];
+      if (src) pads = src.objs.filter(o => o.t !== "S" && o.pol !== "C");
+      else { const cu = L[side === "top" ? "cu-top" : "cu-bot"]; if (cu) pads = cu.objs.filter(o => o.t === "F"); }
+      const its = items.filter(i => i.side === side).map(i => { const [x, y] = align.tf(i); return { i, x, y, r: 1 }; });
+      if (!its.length) continue;
+      const pc = pads.map(o => ({ o, x: (o.bb[0] + o.bb[2]) / 2, y: (o.bb[1] + o.bb[3]) / 2 }));
+      const assign = new Array(pc.length).fill(-1);
+      const dist = (p, c) => Math.hypot(pc[p].x - its[c].x, pc[p].y - its[c].y);
+      // phase A: two-terminal parts take the most symmetric pad pair around their centroid
+      const twoPin = its.map((it, c) => /^(R|C|L|FB|D|LED|F|CR|RV|VR)\d/i.test(it.i.ref) ? c : -1).filter(c => c >= 0);
+      const bestPair = c => {
+        const near = [];
+        for (let p = 0; p < pc.length; p++) if (assign[p] < 0) { const d = dist(p, c); if (d < 3.2) near.push([d, p]); }
+        near.sort((a, b) => a[0] - b[0]);
+        let best = null;
+        for (let a = 0; a < Math.min(near.length, 5); a++) for (let b = a + 1; b < Math.min(near.length, 6); b++) {
+          const [da, pa] = near[a], [db, pb] = near[b];
+          const va = [pc[pa].x - its[c].x, pc[pa].y - its[c].y], vb = [pc[pb].x - its[c].x, pc[pb].y - its[c].y];
+          const cos = (va[0] * vb[0] + va[1] * vb[1]) / ((da * db) || 1e-9);
+          const q = Math.abs(da - db) + (1 + cos) * Math.max(da, db) + 0.05 * (da + db);
+          const third = near.filter(n => n[1] !== pa && n[1] !== pb)[0];
+          const crowded = third && third[0] < 1.45 * Math.max(da, db) && third[0] - Math.max(da, db) < 0.35;
+          if (!crowded && cos < -0.85 && Math.abs(da - db) < 0.25 * Math.max(da, db) + 0.12 && (!best || q < best.q)) best = { q, pa, pb };
+        }
+        return best;
+      };
+      let pending = twoPin.slice();
+      for (let guard = 0; guard < 4 && pending.length; guard++) {
+        const cands = pending.map(c => ({ c, b: bestPair(c) })).filter(x => x.b).sort((x, y) => x.b.q - y.b.q);
+        const next = [];
+        for (const { c, b } of cands) {
+          if (assign[b.pa] >= 0 || assign[b.pb] >= 0) { next.push(c); continue; }
+          assign[b.pa] = c; assign[b.pb] = c; its[c].fixed = true;
+        }
+        pending = next;
+      }
+      // phase A2: parts whose BOM footprint states a body size (QFN 4x4mm, LQFP-48 7x7mm...) claim the pads inside it
+      its.forEach((it, c) => {
+        if (it.fixed) return;
+        const f = String((ftpOf && ftpOf(it.i.ref)) || "");
+        const m = f.match(/(\d+(?:\.\d+)?)\s*[xX×]\s*(\d+(?:\.\d+)?)\s*mm/);
+        if (!m || !/QFN|DFN|QFP|LGA|BGA|SON|MLF|WSON|VQFN|UQFN|TQFP|LQFP/i.test(f)) return;
+        let w = +m[1], h = +m[2];
+        const quarter = Math.round(((it.i.rot % 180) + 180) % 180 / 90) === 1;
+        if (quarter) [w, h] = [h, w];
+        const lead = /QFP/i.test(f) ? 1.1 : 0.15;
+        it.box = [w / 2 + lead, h / 2 + lead];
+      });
+      for (let p = 0; p < pc.length; p++) {
+        if (assign[p] >= 0) continue;
+        let best = -1, bd = Infinity;
+        its.forEach((it, c) => { if (!it.box) return; const dx = Math.abs(pc[p].x - it.x), dy = Math.abs(pc[p].y - it.y); if (dx <= it.box[0] && dy <= it.box[1]) { const d = Math.hypot(dx, dy); if (d < bd) { bd = d; best = c; } } });
+        if (best >= 0) assign[p] = best;
+      }
+      its.forEach(it => { if (it.box) it.fixed = true; });
+      // phase B: everything else, nearest centroid weighted by each part's size
+      const free = its.map((it, c) => it.fixed ? -1 : c).filter(c => c >= 0);
+      const loose = []; for (let p = 0; p < pc.length; p++) if (assign[p] < 0) loose.push(p);
+      if (free.length) {
+        for (const c of free) its[c].r = 0.3;
+        for (const p of loose) {
+          let best = -1, bd = Infinity;
+          for (const c of free) { const d = dist(p, c); if (d < bd) { bd = d; best = c; } }
+          if (best >= 0 && bd < 8) its[best].r = Math.max(its[best].r, bd);
+        }
+        for (let iter = 0; iter < 4; iter++) {
+          for (const p of loose) {
+            let best = -1, bs = Infinity;
+            for (const c of free) { const s = dist(p, c) / (its[c].r + 0.3); if (s < bs) { bs = s; best = c; } }
+            assign[p] = bs <= 1.25 ? best : -1;
+          }
+          for (const c of free) {
+            const ds = []; for (const p of loose) if (assign[p] === c) ds.push(dist(p, c));
+            ds.sort((a, b) => a - b);
+            let cut = ds.length - 1;
+            for (let k = 0; k < ds.length - 1; k++) {
+              const gap = ds[k + 1] - ds[k];
+              if (gap > 0.6 && ds[k + 1] > 1.5 * ds[k] && ds.length - 1 - k <= Math.max(2, 0.6 * (k + 1))) { cut = k; break; }
+            }
+            if (ds.length) its[c].r = Math.max(0.3, ds[cut]);
+          }
+        }
+      }
+      // phase C: parts with no paste (through-hole) take large copper pads near them
+      const empty = its.map((it, c) => c).filter(c => !assign.includes(c));
+      const cu = L[side === "top" ? "cu-top" : "cu-bot"];
+      const tht = new Map();
+      if (empty.length && cu) {
+        const big = cu.objs.filter(o => o.t === "F" && Math.min(o.bb[2] - o.bb[0], o.bb[3] - o.bb[1]) >= 0.9 && !pc.some(q => q.x > o.bb[0] && q.x < o.bb[2] && q.y > o.bb[1] && q.y < o.bb[3]));
+        for (const o of big) {
+          const x = (o.bb[0] + o.bb[2]) / 2, y = (o.bb[1] + o.bb[3]) / 2;
+          let best = -1, bd = 6;
+          for (const c of empty) { const d = Math.hypot(x - its[c].x, y - its[c].y); if (d < bd) { bd = d; best = c; } }
+          if (best >= 0) { if (!tht.has(best)) tht.set(best, []); tht.get(best).push(o); }
+        }
+      }
+      its.forEach((it, c) => {
+        const ref = it.i.ref;
+        const comp = comps.get(ref) || { ref, sides: {}, paste: {}, smd: true, tht: false, src: "cpl", cpl: it.i };
+        const s = { pads: [], silk: "", bb: newBB(), center: [it.x, it.y] };
+        for (let p = 0; p < pc.length; p++) if (assign[p] === c) { const o = pc[p].o; s.pads.push({ d: o.d, pin: "", name: "", net: "", bb: o.bb }); bbGrow(s.bb, o.bb[0], o.bb[1]); bbGrow(s.bb, o.bb[2], o.bb[3]); }
+        for (const o of tht.get(c) || []) { s.pads.push({ d: o.d, pin: "", name: "", net: "", bb: o.bb }); bbGrow(s.bb, o.bb[0], o.bb[1]); bbGrow(s.bb, o.bb[2], o.bb[3]); }
+        if (!s.pads.length) { s.bb = [it.x - 0.5, it.y - 0.5, it.x + 0.5, it.y + 0.5]; }
+        comp.sides[side] = s;
+        comp.paste[side] = !!src && s.pads.length > 0 && !tht.has(c);
+        comps.set(ref, comp);
+      });
+    }
+    return comps;
+  }
+
+  /* ---------- BOM ---------- */
+  function parseBOM(bom) {
+    const { rows, h } = bom; const lines = [];
+    for (let r = h.r + 1; r < rows.length; r++) {
+      const row = rows[r];
+      const refs = splitRefs(row[h.d]);
+      if (!refs.length) continue;
+      lines.push({
+        val: (h.v >= 0 ? row[h.v] : "") || "", ftp: (h.f >= 0 ? row[h.f] : "") || "",
+        lcsc: ((h.l >= 0 ? row[h.l] : "") || "").trim(), qty: h.q >= 0 ? parseInt(row[h.q], 10) : NaN, refs, line: r + 1,
+      });
+    }
+    return lines;
+  }
+  const PREFIX_NAME = { C: "Capacitors", R: "Resistors", L: "Inductors", D: "Diodes", LED: "LEDs", U: "ICs", IC: "ICs", Q: "Transistors", J: "Connectors", P: "Connectors", CN: "Connectors", Y: "Crystals", X: "Crystals", F: "Fuses", FB: "Ferrite beads", SW: "Switches", S: "Switches", TP: "Test points", K: "Relays", BT: "Batteries", RN: "Resistor arrays", ANT: "Antennas", AE: "Antennas", MH: "Mounting holes", H: "Holes", FID: "Fiducials" };
+  const prefixOf = r => (r.match(/^[A-Za-z_]+/) || [""])[0].toUpperCase();
+  const refSort = (a, b) => { const pa = prefixOf(a), pb = prefixOf(b); if (pa !== pb) return pa < pb ? -1 : 1; return (parseInt(a.replace(/^\D+/, ""), 10) || 0) - (parseInt(b.replace(/^\D+/, ""), 10) || 0); };
+  function prettyFootprint(f) {
+    f = String(f || "").trim(); if (!f) return "";
+    f = f.replace(/^[^:]*:/, "");
+    const kinds = { C: "capacitor", R: "resistor", L: "inductor", D: "diode", LED: "LED", CP: "polarized capacitor", FB: "ferrite bead", F: "fuse" };
+    const m = f.match(/^(C|R|L|D|LED|CP|FB|F)_(\d{4})_\d{4}Metric/i);
+    if (m) return `${m[2]} ${kinds[m[1].toUpperCase()] || ""}`.trim();
+    return f.replace(/_\d{4}Metric/g, "").replace(/_/g, " ");
+  }
+  const SIZE_CODES = { "0201": [0.35, 0.75], "0402": [0.75, 1.3], "0603": [1.3, 1.85], "0805": [1.8, 2.5], "1206": [2.6, 3.8], "1210": [2.6, 3.8], "2512": [5, 7.5] };
+  function padSpan(side) {
+    if (!side || side.pads.length !== 2) return null;
+    const c = side.pads.map(p => [(p.bb[0] + p.bb[2]) / 2, (p.bb[1] + p.bb[3]) / 2]);
+    return Math.hypot(c[0][0] - c[1][0], c[0][1] - c[1][1]);
+  }
+  const padSig = c => { const s = c.sides.top || c.sides.bottom; if (!s) return ""; return s.pads.length + ":" + s.pads.map(p => f3(p.bb[2] - p.bb[0]) + "x" + f3(p.bb[3] - p.bb[1])).map(v => v.split("x").map(Number).sort().join("x")).sort().join(","); };
+
+  /* ---------- main build ---------- */
+  async function build(staged, onStep) {
+    const set = staged.set;
+    if (!set) throw new Error("No gerber layers found. Drop the gerber zip you uploaded to JLCPCB (or the production zip JLC sends back).");
+    onStep && onStep("Parsing gerbers");
+    const L = {}; const warn = [];
+    let tool = "", project = "";
+    let inner = 0;
+    const outlineRank = l => l.ff && /^Profile/i.test(l.ff) ? 0 : /\.gko$/i.test(l.path) ? 1 : /\.gm1$/i.test(l.path) ? 2 : /edge_cuts|outline|profile/i.test(l.path) ? 3 : 4;
+    const ordered = set.layers.slice().sort((a, b) => (a.role === "outline" && b.role === "outline") ? outlineRank(a) - outlineRank(b) : 0);
+    for (const layer of ordered) {
+      if (layer.role === "cu-in") { inner++; continue; }
+      if (!["cu-top", "cu-bot", "mask-top", "mask-bot", "silk-top", "silk-bot", "paste-top", "paste-bot", "outline"].includes(layer.role)) continue;
+      if (L[layer.role]) continue;
+      const g = parseGerber(layer.text);
+      g.path = layer.path;
+      if (layer.role === "outline" && !g.objs.length) continue;
+      L[layer.role] = g;
+      if (!tool && g.fileAttrs.GenerationSoftware) tool = g.fileAttrs.GenerationSoftware.slice(0, 2).join(" ");
+      if (!project && g.fileAttrs.ProjectId) project = g.fileAttrs.ProjectId[0];
+      g.warnings.forEach(w => warn.push(w));
+    }
+    if (!L["cu-top"] && !L["cu-bot"]) throw new Error("The gerber set has no top or bottom copper layer.");
+    const drills = set.drills.map(d => ({ path: d.path, ...parseDrill(d.text) }));
+
+    // outline + bounds
+    let loops = L.outline ? buildOutline(L.outline.objs) : [];
+    const bb = newBB();
+    if (loops.length && L.outline) { const ob = L.outline.bb; bbGrow(bb, ob[0], ob[1]); bbGrow(bb, ob[2], ob[3]); }
+    else { for (const k of ["cu-top", "cu-bot", "silk-top", "mask-top"]) if (L[k] && isFinite(L[k].bb[0])) { bbGrow(bb, L[k].bb[0], L[k].bb[1]); bbGrow(bb, L[k].bb[2], L[k].bb[3]); } }
+    if (!loops.length) loops = [{ d: `M${f3(bb[0])} ${f3(bb[1])}H${f3(bb[2])}V${f3(bb[3])}H${f3(bb[0])}Z`, area: (bb[2] - bb[0]) * (bb[3] - bb[1]), pts: [] }];
+    const outlineD = loops.map(l => l.d).join("");
+    const bounds = bb;
+    const W = bounds[2] - bounds[0], H = bounds[3] - bounds[1];
+
+    onStep && onStep("Drawing layers");
+    const sides = {};
+    for (const [side, s] of [["top", "t"], ["bottom", "b"]]) {
+      const R = makeRenderer(bounds, s);
+      const cu = L[side === "top" ? "cu-top" : "cu-bot"];
+      const mask = L[side === "top" ? "mask-top" : "mask-bot"];
+      const paste = L[side === "top" ? "paste-top" : "paste-bot"];
+      const silk = L[side === "top" ? "silk-top" : "silk-bot"];
+      let body = `<path class="sub" fill-rule="evenodd" d="${outlineD}"/>`;
+      if (cu) {
+        body += `<g id="cu-${s}" class="lyr-cu">${R.render(cu.objs, "cu-f", "cu-s")}</g>`;
+        const open = mask || paste;
+        if (open) {
+          R.defs.push(`<mask id="open-${s}" maskUnits="userSpaceOnUse" ${R.big}><rect ${R.big} fill="#000"/>${R.render(open.objs, "opn-f", "opn-s")}</mask>`);
+          body += `<g class="lyr-pads" mask="url(#open-${s})"><use href="#cu-${s}" class="hasl"/></g>`;
+        } else {
+          body += `<g class="lyr-pads">${R.render(cu.objs.filter(o => o.t === "F"), "pad-f", "pad-s")}</g>`;
+        }
+      }
+      if (silk) body += `<g class="lyr-silk">${R.render(silk.objs, "silk-f", "silk-s")}</g>`;
+      let holes = "";
+      for (const d of drills) {
+        for (const h of d.holes) if (d.npth || (h.fn ? !/via/i.test(h.fn) : h.d >= 0.5)) holes += `<circle cx="${f3(h.x)}" cy="${f3(h.y)}" r="${f3(h.d / 2)}"/>`;
+        for (const sl of d.slots) holes += `<path class="slot" stroke-width="${f3(sl.d)}" d="M${f3(sl.x1)} ${f3(sl.y1)}L${f3(sl.x2)} ${f3(sl.y2)}"/>`;
+      }
+      if (holes) body += `<g class="holes">${holes}</g>`;
+      if (L.outline) body += `<g class="edge">${R.render(L.outline.objs.filter(o => o.t === "S"), "edge-f", "edge-s")}</g>`;
+      sides[side] = (R.defs.length ? `<defs>${R.defs.join("")}</defs>` : "") + body;
+    }
+
+    // components
+    onStep && onStep("Locating parts");
+    const checks = [];
+    let comps = x2Components(L);
+    let mode = comps.size ? "x2" : "none";
+    const cplFile = staged.cpls[0] || null;
+    let cplItems = cplFile ? parseCPL(cplFile) : [];
+    if (mode === "x2") {
+      addSilk(comps, L);
+      if (cplItems.length) {
+        const targets = { top: [], bottom: [] };
+        for (const c of comps.values()) for (const side of ["top", "bottom"]) if (c.sides[side]) { const b = c.sides[side].bb; targets[side].push([(b[0] + b[2]) / 2, (b[1] + b[3]) / 2]); }
+        const al = alignCPL(cplItems, targets, bounds);
+        if (al && al.matched > 0.5) {
+          const off = [];
+          for (const i of cplItems) {
+            const c = comps.get(i.ref);
+            if (!c) continue;
+            const s = c.sides[i.side];
+            if (!s) { off.push(`${i.ref} (CPL says ${i.side}, pads are on the ${i.side === "top" ? "bottom" : "top"})`); continue; }
+            const [x, y] = al.tf(i); const b = s.bb;
+            if (x < b[0] - 0.6 || x > b[2] + 0.6 || y < b[1] - 0.6 || y > b[3] + 0.6) off.push(i.ref);
+          }
+          if (off.length) checks.push({ level: "warn", text: `CPL position doesn't land on the part's pads for ${listRefs(off)}. Check these before ordering assembly.`, refs: off.map(o => o.split(" ")[0]) });
+          const missing = [...comps.values()].filter(c => c.smd && Object.values(c.paste).some(Boolean) && !cplItems.some(i => i.ref === c.ref)).map(c => c.ref);
+          if (missing.length) checks.push({ level: "warn", text: `No CPL position for ${listRefs(missing)}, though the board has paste pads for ${missing.length > 1 ? "them" : "it"}.`, refs: missing });
+        } else if (al) {
+          checks.push({ level: "warn", text: `The CPL file (${cplFile.name}) didn't line up with the pads, so it was left out of the checks.`, refs: [] });
+        }
+      }
+    } else if (cplItems.length) {
+      const targets = { top: [], bottom: [] };
+      for (const [role, side] of [["paste-top", "top"], ["paste-bot", "bottom"], ["mask-top", "top"], ["mask-bot", "bottom"]]) {
+        if (!L[role] || targets[side].length) continue;
+        for (const o of L[role].objs) if (o.t !== "S") targets[side].push([(o.bb[0] + o.bb[2]) / 2, (o.bb[1] + o.bb[3]) / 2]);
+      }
+      if (!targets.top.length && L["cu-top"]) L["cu-top"].objs.forEach(o => { if (o.t === "F") targets.top.push([(o.bb[0] + o.bb[2]) / 2, (o.bb[1] + o.bb[3]) / 2]); });
+      const al = alignCPL(cplItems, targets, bounds);
+      if (al) {
+        const ftpMap = new Map();
+        if (staged.boms[0]) for (const l of parseBOM(staged.boms[0])) for (const r of l.refs) ftpMap.set(r, l.ftp + " " + l.val);
+        for (const i of cplItems) if (!ftpMap.has(i.ref) && i.pkg) ftpMap.set(i.ref, i.pkg);
+        comps = cplComponents(cplItems, L, al, r => ftpMap.get(r));
+        mode = "cpl";
+        checks.push({ level: "info", text: `These gerbers carry no pad-to-part data, so parts were placed from the CPL file. Pin 1 and net names aren't available.`, refs: [] });
+        if (al.matched < 0.6) checks.push({ level: "warn", text: `Only ${Math.round(al.matched * 100)}% of CPL positions landed on pads. The CPL may use a different origin than the gerbers, so part highlights could be off.`, refs: [] });
+      }
+    }
+    if (mode === "none") checks.push({ level: "warn", text: cplFile ? "Couldn't match the CPL file to the board." : "These gerbers don't say which pad belongs to which part. Add the CPL (pick-and-place) file to locate parts.", refs: [] });
+
+    // BOM rows
+    onStep && onStep("Matching the BOM");
+    const bomFile = staged.boms[0] || null;
+    let rows = [];
+    const onBoard = r => comps.has(r);
+    if (bomFile) {
+      let lines = parseBOM(bomFile);
+      // duplicates across lines
+      const seen = new Map(); const dups = new Set();
+      lines.forEach((l, li) => l.refs.forEach(r => { if (seen.has(r) && seen.get(r) !== li) dups.add(r); else seen.set(r, li); }));
+      if (dups.size) checks.push({ level: "error", text: `${listRefs([...dups])} appear${dups.size > 1 ? "" : "s"} on more than one BOM line.`, refs: [...dups] });
+      // qty mismatch
+      for (const l of lines) if (!isNaN(l.qty) && l.qty !== l.refs.length) checks.push({ level: "warn", text: `BOM line ${l.val || l.line}: quantity says ${l.qty} but ${l.refs.length} designator${l.refs.length > 1 ? "s are" : " is"} listed.`, refs: l.refs });
+      // merge lines sharing an LCSC part
+      const merged = []; const byL = new Map();
+      for (const l of lines) {
+        const k = l.lcsc && /^C\d+$/i.test(l.lcsc) ? l.lcsc.toUpperCase() : null;
+        if (k && byL.has(k)) { const m = byL.get(k); m.refs.push(...l.refs.filter(r => !m.refs.includes(r))); m.vals.push(l.val); }
+        else { const m = { ...l, vals: [l.val], refs: [...l.refs] }; merged.push(m); if (k) byL.set(k, m); }
+      }
+      for (const m of merged) if (m.vals.length > 1) {
+        const uniq = [...new Set(m.vals)];
+        m.note = `Your BOM lists this part on ${m.vals.length} lines${uniq.length > 1 ? ` (${uniq.join(", ")})` : ""}. Same LCSC part, so one strip covers all of them.`;
+        checks.push({ level: "info", text: `Merged ${m.vals.length} BOM lines that use the same LCSC part ${m.lcsc}.`, refs: m.refs });
+      }
+      const inBom = new Set(merged.flatMap(m => m.refs));
+      const notInBom = [...comps.keys()].filter(r => !inBom.has(r));
+      const used = new Set();
+      for (const m of merged) {
+        const row = { val: m.vals[0] || "(no value)", kind: prettyFootprint(m.ftp), ftp: m.ftp, lcsc: m.lcsc && /^C\d+$/i.test(m.lcsc) ? m.lcsc.toUpperCase() : "", refs: [], missing: [], note: m.note || "", warn: false, subs: [] };
+        for (const r of m.refs) {
+          if (onBoard(r)) { row.refs.push(r); continue; }
+          // look for a same-footprint stand-in that the BOM doesn't mention
+          const sib = m.refs.find(x => onBoard(x));
+          let sub = null;
+          if (sib && mode !== "none") {
+            const sig = padSig(comps.get(sib)), pre = prefixOf(r);
+            const cands = notInBom.filter(x => !used.has(x) && prefixOf(x) === pre && padSig(comps.get(x)) === sig);
+            if (cands.length === 1) sub = cands[0];
+          }
+          if (sub) { used.add(sub); row.refs.push(sub); row.subs.push([r, sub]); row.warn = true; }
+          else row.missing.push(r);
+        }
+        if (row.subs.length) {
+          const t = row.subs.map(([a, b]) => `${a} isn't on the board, but ${b} has the same pads and isn't in the BOM, so ${b} is shown here`).join(". ");
+          row.note = (row.note ? row.note + " " : "") + t + ".";
+          checks.push({ level: "error", text: row.subs.map(([a, b]) => `BOM lists ${a}, which isn't on the board. ${b} has matching pads and no BOM line, so it's treated as ${a}.`).join(" "), refs: row.subs.map(s => s[1]) });
+        }
+        if (row.missing.length) {
+          row.warn = true;
+          row.note = (row.note ? row.note + " " : "") + `${listRefs(row.missing)} ${row.missing.length > 1 ? "aren't" : "isn't"} on the board.`;
+          if (mode !== "none") checks.push({ level: "error", text: `BOM line ${row.val}: ${listRefs(row.missing)} ${row.missing.length > 1 ? "aren't" : "isn't"} on the board.`, refs: [] });
+        }
+        row.refs.sort(refSort);
+        // footprint size vs pads
+        const code = (String(m.ftp).match(/(?:^|[^0-9])(0201|0402|0603|0805|1206|1210|2512)(?![0-9])/) || [])[1];
+        if (code && mode !== "none") {
+          const [lo, hi] = SIZE_CODES[code]; const bad = [];
+          for (const r of row.refs) { const c = comps.get(r); const sp = c && padSpan(c.sides.top || c.sides.bottom); if (sp && (sp < lo * 0.8 || sp > hi * 1.2)) bad.push(r); }
+          if (bad.length) checks.push({ level: "warn", text: `${listRefs(bad)}: BOM says ${code}, but the pad spacing on the board looks like a different size.`, refs: bad });
+        }
+        if (row.refs.length || row.missing.length) rows.push(row);
+      }
+      const leftover = notInBom.filter(r => !used.has(r)).sort(refSort);
+      const withPaste = leftover.filter(r => { const c = comps.get(r); return Object.values(c.paste).some(Boolean); });
+      const noPaste = leftover.filter(r => !withPaste.includes(r));
+      if (withPaste.length) {
+        rows.push({ val: "Paste pads, no BOM line", kind: "Maybe DNP", refs: withPaste, info: true, note: "These have solder paste openings but nothing in the BOM. If they're meant to stay empty, ignore this line." });
+        checks.push({ level: "warn", text: `${listRefs(withPaste)} ${withPaste.length > 1 ? "have" : "has"} paste pads but no BOM line.`, refs: withPaste });
+      }
+      if (noPaste.length) checks.push({ level: "info", text: `${listRefs(noPaste)} ${noPaste.length > 1 ? "are" : "is"} on the board but not in the BOM, with no paste pads (through-hole or bare pads).`, refs: noPaste });
+      if (noPaste.length) rows.push({ val: "Not in the BOM", kind: "No paste: through-hole or bare pads", refs: noPaste, info: true, note: "Solder these by hand after reflow, or leave them if they're test or jumper pads." });
+    } else {
+      // no BOM: use CPL values if present, else group by designator letter
+      const byKey = new Map();
+      const cplBy = new Map(cplItems.map(i => [i.ref, i]));
+      for (const r of [...comps.keys()].sort(refSort)) {
+        const ci = cplBy.get(r);
+        let key, val, kind;
+        if (ci && (ci.val || ci.pkg)) { key = ci.val + "|" + ci.pkg; val = ci.val || prefixOf(r) + " parts"; kind = prettyFootprint(ci.pkg); }
+        else { const p = prefixOf(r); key = p; val = PREFIX_NAME[p] ? `${PREFIX_NAME[p]}` : `${p} parts`; kind = "No BOM loaded"; }
+        if (!byKey.has(key)) byKey.set(key, { val, kind, lcsc: "", refs: [], note: "" });
+        byKey.get(key).refs.push(r);
+      }
+      rows = [...byKey.values()];
+      if (comps.size) checks.push({ level: "info", text: "No BOM loaded, so parts are grouped by designator letter. Drop your BOM (CSV or XLSX) to see values and LCSC numbers.", refs: [] });
+    }
+    // polarity (pin 1 shown only when pin numbers are known)
+    for (const row of rows) {
+      if (row.info || mode !== "x2") { row.polar = false; continue; }
+      row.polar = row.refs.some(r => {
+        const c = comps.get(r); if (!c) return false;
+        const s = c.sides.top || c.sides.bottom; const n = s ? new Set(s.pads.map(p => p.pin)).size : 0;
+        const p = prefixOf(r);
+        return n >= 3 || (n === 2 && /^(D|LED|CR)$/.test(p)) || /CP_|tantal|elec|polar/i.test(row.ftp || "");
+      });
+    }
+
+    // meta
+    const order = staged.order;
+    const cuCount = (L["cu-top"] ? 1 : 0) + (L["cu-bot"] ? 1 : 0) + inner;
+    const counts = { top: 0, bottom: 0 };
+    for (const c of comps.values()) { if (c.sides.top) counts.top++; if (c.sides.bottom) counts.bottom++; }
+    if (warn.length) checks.push({ level: "info", text: `Some gerber features were simplified: ${[...new Set(warn)].join(", ")}.`, refs: [] });
+    const name = project || (order && order.name) || (set.dir.split("/").filter(Boolean).pop() || "board").replace(/\.zip$/i, "");
+    const compList = [...comps.values()].map(c => {
+      const out = { ref: c.ref, sides: {}, paste: c.paste };
+      for (const side of ["top", "bottom"]) {
+        const s = c.sides[side]; if (!s) continue;
+        out.sides[side] = { bb: s.bb.map(v => Math.round(v * 1000) / 1000), pads: s.pads.map(p => (globalThis.POKE_DEBUG ? { d: p.d, pin: p.pin, name: p.name, net: p.net, bb: p.bb } : { d: p.d, pin: p.pin, name: p.name, net: p.net })), silk: s.silk || "" };
+      }
+      return out;
+    });
+    const hasNets = compList.some(c => Object.values(c.sides).some(s => s.pads.some(p => p.net)));
+    return {
+      v: 1,
+      name, mode, hasNets,
+      meta: { w: W, h: H, cu: cuCount, tool, source: set.dir.replace(/\/$/, ""), counts, bom: bomFile ? bomFile.name : "", cpl: cplFile ? cplFile.name : "" },
+      order: order || null,
+      bounds, outline: outlineD,
+      sides, comps: compList, rows, checks,
+      hash: hashStr(outlineD + compList.map(c => c.ref).join(",") + (L["cu-top"] ? L["cu-top"].objs.length : 0)),
+    };
+  }
+  function listRefs(a) { a = [...new Set(a)]; if (a.length <= 1) return a.join(""); if (a.length <= 6) return a.slice(0, -1).join(", ") + " and " + a[a.length - 1]; return a.slice(0, 5).join(", ") + ` and ${a.length - 5} more`; }
+  function hashStr(s) { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); } return (h >>> 0).toString(36); }
+
+  const summary = {
+    bomLines: b => parseBOM(b).length,
+    cplCount: c => parseCPL(c).length,
+    hasPadData: set => set.layers.some(l => (l.role === "cu-top" || l.role === "cu-bot") && /TO\.P,/.test(l.text)),
+    tool: set => { const l = set.layers.find(x => x.tool); return l ? l.tool.replace(/,.*$/, "").replace(/\(.*$/, "").trim() : ""; },
+  };
+  return { scan, build, roleFromName, classifyTable, splitRefs, summary };
+})();
+if (typeof module !== "undefined") module.exports = PokeBoard;
+
+/* ---------- poke~pcb: app ---------- */
+(() => {
+  const $ = id => document.getElementById(id);
+  const NS = "http://www.w3.org/2000/svg";
+  const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const reduceMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* pristine copy of this page, for "Save offline copy" */
+  const PRISTINE = (() => {
+    const root = document.documentElement.cloneNode(true);
+    root.querySelectorAll("head > *:not([data-poke]), body > *:not([data-poke])").forEach(n => n.remove());
+    root.querySelectorAll("#poke-data").forEach(n => n.remove());
+    return "<!doctype html>\n" + root.outerHTML;
+  })();
+
+  /* ---------- small UI helpers ---------- */
+  function toast(msg, ms = 2600) {
+    const t = $("toast"); t.textContent = msg; t.classList.add("on");
+    clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("on"), ms);
+  }
+  async function saveFile(filename, data) {
+    if (window.claude && typeof window.claude.use === "function") {
+      let dl = null;
+      try { dl = await window.claude.use("downloads"); } catch (e) { dl = null; }
+      if (dl) {
+        try { await dl.save({ filename, data }); toast(`Saved ${filename}`); }
+        catch (e) {
+          const code = e && e.code;
+          if (code === "declined") return;
+          if (code === "rate_limited") toast("A save prompt is already open.");
+          else toast("Couldn't save the file in this view.");
+        }
+        return;
+      }
+    }
+    const blob = data instanceof Blob ? data : new Blob([data]);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  }
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { } },
+  };
+
+  /* =========================================================
+     Staging (landing screen)
+     ========================================================= */
+  let groups = [];   // {label, files, res}
+  let gid = 0;
+  const landing = $("landing"), app = $("app");
+
+  async function addGroup(label, files) {
+    if (!files.length) return;
+    $("errBox").textContent = "";
+    $("busy").textContent = `Reading ${label}…`;
+    $("openBtn").disabled = true;
+    let res;
+    try { res = await PokeBoard.scan(files, s => { $("busy").textContent = s + "…"; }); }
+    catch (e) { $("busy").textContent = ""; $("errBox").textContent = `Couldn't read ${label}: ${e.message}`; renderStaged(); return null; }
+    const g = { id: ++gid, label, files, res };
+    // a new gerber set replaces the previous one; a new BOM/CPL takes priority over older ones
+    if (res.set) groups = groups.filter(x => !x.res.set || x.res.boms.length || x.res.cpls.length ? true : false).map(x => x.res.set ? { ...x, res: { ...x.res, set: null } } : x);
+    groups.push(g);
+    $("busy").textContent = "";
+    renderStaged();
+    return g;
+  }
+  function merged() {
+    const rev = groups.slice().reverse();
+    const withSet = rev.find(g => g.res.set);
+    return {
+      set: withSet ? withSet.res.set : null,
+      setGroup: withSet || null,
+      boms: rev.flatMap(g => g.res.boms),
+      cpls: rev.flatMap(g => g.res.cpls),
+      order: (rev.find(g => g.res.order) || { res: {} }).res.order || null,
+      notes: [...new Map(groups.flatMap(g => g.res.notes).map(n => [n.text, n])).values()],
+    };
+  }
+  const OK = `<span class="st"><svg viewBox="0 0 14 14"><path d="M3 7.4l2.6 2.6L11 4.4"/></svg></span>`;
+  const OPT = `<span class="st"></span>`;
+  function renderStaged() {
+    const m = merged();
+    const ul = $("staged");
+    let h = "";
+    const rm = g => g ? `<button type="button" class="x" data-rm="${g.id}">Remove</button>` : "";
+    const groupOf = item => groups.find(g => g.res.boms.includes(item) || g.res.cpls.includes(item));
+    if (m.set) {
+      const n = m.set.layers.length, d = m.set.drills.length;
+      const pad = PokeBoard.summary.hasPadData(m.set);
+      const tool = PokeBoard.summary.tool(m.set);
+      const folder = m.set.dir.split("/").filter(Boolean).pop() || m.setGroup.label;
+      h += `<li class="ok">${OK}<div><b>Gerbers</b><div class="d">${esc(folder)}: ${n} layer${n === 1 ? "" : "s"}, ${d} drill file${d === 1 ? "" : "s"}${tool ? ", " + esc(tool) : ""}. ${pad ? "Has pad-to-part data, so parts can be located exactly." : "No pad-to-part data. Add the CPL file to locate parts."}</div></div>${rm(m.setGroup)}</li>`;
+    } else {
+      h += `<li class="${groups.length ? "bad" : "opt"}">${groups.length ? `<span class="st"></span>` : OPT}<div><b>Gerbers</b><div class="d">${groups.length ? "No gerber layers found yet. Drop the gerber zip you uploaded to JLC, or the production zip JLC sent back." : "Needed. The zip you uploaded to JLC works, and so does the production zip JLC sends back."}</div></div></li>`;
+    }
+    if (m.boms.length) {
+      const b = m.boms[0];
+      h += `<li class="ok">${OK}<div><b>BOM</b><div class="d">${esc(b.name)}: ${PokeBoard.summary.bomLines(b)} lines${m.boms.length > 1 ? `. Using the newest of ${m.boms.length} BOM files.` : ""}</div></div>${rm(groupOf(b))}</li>`;
+    } else h += `<li class="opt">${OPT}<div><b>BOM</b> <span class="d">(optional)</span><div class="d">Adds values and LCSC numbers, and checks them against the board.</div></div></li>`;
+    const padData = m.set && PokeBoard.summary.hasPadData(m.set);
+    if (m.cpls.length) {
+      const c = m.cpls[0];
+      h += `<li class="ok">${OK}<div><b>Pick-and-place (CPL)</b><div class="d">${esc(c.name)}: ${PokeBoard.summary.cplCount(c)} positions${padData ? ", used to double-check placement" : ""}.</div></div>${rm(groupOf(c))}</li>`;
+    } else h += `<li class="opt">${OPT}<div><b>Pick-and-place (CPL)</b> <span class="d">(${padData ? "optional" : m.set ? "needed for these gerbers" : "optional"})</span><div class="d">${padData ? "Your gerbers already locate every part. A CPL adds a position check." : "Locates parts when the gerbers don't say which pad belongs to which part."}</div></div></li>`;
+    if (m.order) {
+      const o = m.order; const bits = [o.mask && `${o.mask} mask`, o.finishLabel, o.thickness && `${o.thickness} mm`, o.layers && `${o.layers} layers`].filter(Boolean);
+      h += `<li class="ok">${OK}<div><b>JLC order ${esc(o.po)}</b><div class="d">${esc(bits.join(", "))}. The board is drawn in these colours.</div></div></li>`;
+    }
+    ul.innerHTML = h;
+    $("notes").innerHTML = m.notes.map(n => `<li class="${n.level}">${esc(n.text)}</li>`).join("");
+    $("openBtn").disabled = !m.set;
+  }
+  $("staged").addEventListener("click", e => {
+    const b = e.target.closest("[data-rm]"); if (!b) return;
+    groups = groups.filter(g => g.id !== +b.dataset.rm);
+    renderStaged();
+  });
+
+  async function filesFromDataTransfer(dt) {
+    const items = dt.items ? [...dt.items] : [];
+    const entries = items.map(i => i.webkitGetAsEntry && i.webkitGetAsEntry()).filter(Boolean);
+    if (entries.length && entries.some(e => e.isDirectory)) {
+      const out = [];
+      const walk = async (entry, prefix) => {
+        if (entry.isFile) { const f = await new Promise((res, rej) => entry.file(res, rej)); out.push({ name: f.name, path: prefix + f.name, blob: f }); }
+        else if (entry.isDirectory) {
+          const reader = entry.createReader();
+          let batch;
+          do { batch = await new Promise((res, rej) => reader.readEntries(res, rej)); for (const c of batch) await walk(c, prefix + entry.name + "/"); } while (batch.length);
+        }
+      };
+      for (const e of entries) await walk(e, "");
+      return out;
+    }
+    return [...(dt.files || [])].map(f => ({ name: f.name, path: f.name, blob: f }));
+  }
+  const labelFor = files => files.length === 1 ? files[0].name : (files[0].path.includes("/") ? files[0].path.split("/")[0] + "/" : `${files.length} files`);
+  async function ingest(files) {
+    if (!files.length) return null;
+    // zips each get their own group; loose files go together (so a folder of gerbers stays one set)
+    const zips = files.filter(f => /\.zip$/i.test(f.name)), loose = files.filter(f => !/\.zip$/i.test(f.name));
+    const added = [];
+    for (const z of zips) { const g = await addGroup(z.name, [z]); if (g) added.push(g); }
+    if (loose.length) { const g = await addGroup(labelFor(loose), loose); if (g) added.push(g); }
+    return added;
+  }
+
+  const drop = $("drop");
+  $("pickFiles").onclick = e => { e.stopPropagation(); $("fileIn").click(); };
+  $("pickFolder").onclick = e => { e.stopPropagation(); $("dirIn").click(); };
+  drop.onclick = () => $("fileIn").click();
+  drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("fileIn").click(); } };
+  $("fileIn").onchange = async e => { const fs = [...e.target.files].map(f => ({ name: f.name, path: f.name, blob: f })); e.target.value = ""; await afterIngest(await ingest(fs)); };
+  $("dirIn").onchange = async e => { const fs = [...e.target.files].map(f => ({ name: f.name, path: f.webkitRelativePath || f.name, blob: f })); e.target.value = ""; await afterIngest(await ingest(fs)); };
+  $("openBtn").onclick = () => openFromStaging();
+
+  // window-wide drag and drop
+  let dragDepth = 0;
+  const hasFiles = e => e.dataTransfer && [...(e.dataTransfer.types || [])].includes("Files");
+  window.addEventListener("dragenter", e => { if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; if (!app.hidden) $("veil").hidden = false; else drop.classList.add("over"); });
+  window.addEventListener("dragover", e => { if (hasFiles(e)) e.preventDefault(); });
+  window.addEventListener("dragleave", e => { if (!hasFiles(e)) return; dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) { $("veil").hidden = true; drop.classList.remove("over"); } });
+  window.addEventListener("drop", async e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault(); dragDepth = 0; $("veil").hidden = true; drop.classList.remove("over");
+    const files = await filesFromDataTransfer(e.dataTransfer);
+    await afterIngest(await ingest(files));
+  });
+  async function afterIngest(added) {
+    if (!added || !added.length) return;
+    if (!app.hidden) {
+      // already looking at a board: rebuild in place
+      if (merged().set) { await openFromStaging(true); toast(`Updated with ${added.map(g => g.label).join(", ")}`); }
+      else toast("No gerbers found in those files.");
+    }
+  }
+
+  async function openFromStaging(keepView) {
+    const m = merged();
+    if (!m.set) return;
+    $("openBtn").disabled = true; $("errBox").textContent = "";
+    try {
+      const p = await PokeBoard.build(m, s => { $("busy").textContent = s + "…"; });
+      $("busy").textContent = "";
+      openProject(p, keepView);
+    } catch (e) {
+      console.error(e);
+      $("busy").textContent = "";
+      $("errBox").textContent = e.message || String(e);
+      landing.hidden = false; app.hidden = true;
+    }
+    $("openBtn").disabled = !merged().set;
+  }
+
+  /* =========================================================
+     Assembly view
+     ========================================================= */
+  const svg = $("pcb"), world = $("world");
+  const stTop = $("static-top"), stBot = $("static-bottom"), ovTop = $("ov-top"), ovBot = $("ov-bottom"), labels = $("labels");
+  const viewer = $("viewer"), tip = $("tip"), list = $("list"), qIn = $("q");
+  const LOOKS = {
+    green: { mask: "#1D5A38", cu: "#2C7349", silk: "#F1F2EC" },
+    black: { mask: "#0E1112", cu: "#1F2629", silk: "#ECEDE8" },
+    blue: { mask: "#1B3C75", cu: "#2A5292", silk: "#F0F2F5" },
+    red: { mask: "#8A1E1E", cu: "#A6302D", silk: "#F3EEEA" },
+    yellow: { mask: "#C49A1F", cu: "#D3AE3F", silk: "#FAFAF5" },
+    white: { mask: "#E7E8E3", cu: "#D3D6CF", silk: "#1C1F21" },
+    purple: { mask: "#482A6B", cu: "#5C3A86", silk: "#F0EDF3" },
+  };
+  const FINISH = { hasl: "#C3C7CA", enig: "#D8B25E", osp: "#C9855A" };
+
+  let P = null, comps = {}, ROWS = [], refRow = {}, TRACKED = [];
+  let placed = new Set(), boardNo = 1, boards = 1, look = null;
+  let side = "top", rot = 0, pinned = null, preview = null, boardHover = null, filter = "all", query = "";
+  let netMode = false, netHi = null;
+  let X0 = 0, Y0 = 0, X1 = 1, Y1 = 1, SX = 1, CX = 0, CY = 0;
+  let cmpEls = { top: {}, bottom: {} }, lblEls = { top: {}, bottom: {} }, netEls = { top: new Map(), bottom: new Map() };
+  let view = { x: 0, y: 0, w: 10, h: 10 };
+  let tab = "parts";
+
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+  const area = bb => (bb[2] - bb[0]) * (bb[3] - bb[1]);
+  function rect(parent, cls, bb, pad, r) {
+    return el("rect", { class: cls, x: bb[0] - pad, y: bb[1] - pad, width: bb[2] - bb[0] + 2 * pad, height: bb[3] - bb[1] + 2 * pad, rx: r }, parent);
+  }
+  const keyP = k => `poke:${P.hash}:${k}`;
+
+  function openProject(p, keepView) {
+    const sameBoard = P && P.hash === p.hash;
+    P = p;
+    comps = {}; P.comps.forEach(c => comps[c.ref] = c);
+    ROWS = P.rows; refRow = {};
+    ROWS.forEach((r, i) => r.refs.forEach(ref => { if (!(ref in refRow) || !r.info) refRow[ref] = i; }));
+    TRACKED = [...new Set(ROWS.filter(r => !r.info).flatMap(r => r.refs))];
+    [X0, Y0, X1, Y1] = P.bounds; SX = X0 + X1; CX = SX / 2; CY = -(Y0 + Y1) / 2;
+    if (!sameBoard) { side = "top"; rot = 0; pinned = null; preview = null; filter = "all"; query = ""; qIn.value = ""; netMode = false; }
+    netHi = null; boardHover = null;
+    boards = store.get(keyP("n"), 1);
+    boardNo = Math.min(store.get(keyP("cur"), 1), boards);
+    loadPlaced();
+    look = store.get(keyP("look"), null) || { mask: (P.order && P.order.mask) || "green" };
+    // header
+    $("bName").textContent = P.name;
+    document.title = `${P.name} · poke~pcb`;
+    const m = P.meta, o = P.order;
+    const bits = [`${m.w.toFixed(1)} × ${m.h.toFixed(1)} mm`, `${m.cu} layer${m.cu === 1 ? "" : "s"}`];
+    if (m.tool) bits.push(m.tool.replace(/,.*$/, ""));
+    let meta = bits.join(", ");
+    if (o && o.po) meta += `. JLC order ${o.po}${o.mask ? `, ${o.mask} mask` : ""}${o.finishLabel ? `, ${o.finishLabel}` : ""}${o.thickness ? `, ${o.thickness} mm` : ""}`;
+    meta += m.bom ? `. BOM: ${m.bom}` : ". No BOM loaded";
+    $("bMeta").textContent = meta;
+    renderBoardSel();
+    // svg
+    const TF = { top: "scale(1,-1)", bottom: `matrix(-1,0,0,-1,${SX},0)` };
+    stTop.setAttribute("transform", TF.top); ovTop.setAttribute("transform", TF.top);
+    stBot.setAttribute("transform", TF.bottom); ovBot.setAttribute("transform", TF.bottom);
+    stTop.innerHTML = P.sides.top; stBot.innerHTML = P.sides.bottom;
+    buildOverlay();
+    applyLook();
+    // toolbar state
+    $("tgNet").hidden = !P.hasNets; $("lgNet").hidden = !(P.hasNets && netMode);
+    $("tgNet").setAttribute("aria-pressed", netMode);
+    $("lgPin").hidden = P.mode !== "x2";
+    const nd = $("nodata");
+    nd.hidden = P.mode !== "none";
+    nd.textContent = P.mode === "none" ? "These gerbers don't say where each part sits. Drop the CPL (pick-and-place) file here to locate them." : "";
+    setSide(side, true);
+    applyRotation();
+    renderChecks();
+    setTab(tab === "checks" && sameBoard ? "checks" : "parts");
+    const nErr = P.checks.filter(c => c.level === "error").length;
+    if (!sameBoard && nErr) setTimeout(() => toast(`Found ${nErr} BOM error${nErr > 1 ? "s" : ""}. See the Checks tab.`, 4200), 400);
+    buildList();
+    landing.hidden = true; app.hidden = false;
+    if (!keepView || !sameBoard) requestAnimationFrame(fitBoard);
+  }
+
+  function buildOverlay() {
+    for (const g of [ovTop, ovBot, labels]) g.textContent = "";
+    cmpEls = { top: {}, bottom: {} }; lblEls = { top: {}, bottom: {} }; netEls = { top: new Map(), bottom: new Map() };
+    for (const sd of ["top", "bottom"]) {
+      const g = sd === "top" ? ovTop : ovBot;
+      el("path", { class: "dim", d: P.outline, "fill-rule": "evenodd" }, g);
+      const cl = P.comps.filter(c => c.sides[sd]).sort((a, b) => area(b.sides[sd].bb) - area(a.sides[sd].bb));
+      for (const c of cl) {
+        const s = c.sides[sd], bb = s.bb, row = ROWS[refRow[c.ref]];
+        const cg = el("g", { class: "cmp" + (row && row.polar ? " polar" : ""), "data-ref": c.ref }, g);
+        rect(cg, "hit", bb, .28, .15);
+        rect(cg, "body", bb, .06, .08);
+        if (s.silk) { const sk = el("g", { class: "csilk" }, cg); sk.innerHTML = s.silk; }
+        const pg = el("g", { class: "pads" }, cg);
+        for (const pd of s.pads) {
+          const pe = el("path", { class: "pad" + (pd.pin === "1" ? " p1" : ""), d: pd.d }, pg);
+          if (pd.pin) pe.dataset.pin = pd.pin;
+          if (pd.name) pe.dataset.name = pd.name;
+          if (pd.net) { pe.dataset.net = pd.net; if (!netEls[sd].has(pd.net)) netEls[sd].set(pd.net, []); netEls[sd].get(pd.net).push(pe); }
+        }
+        if (!s.pads.length) {
+          const cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2;
+          el("path", { class: "cross", d: `M${cx - .6} ${cy}H${cx + .6}M${cx} ${cy - .6}V${cy + .6}` }, cg);
+        }
+        rect(cg, "halo", bb, .42, .35);
+        cmpEls[sd][c.ref] = cg;
+        const w = bb[2] - bb[0], h = bb[3] - bb[1];
+        const fs = Math.max(.42, Math.min(1.05, Math.min(w, h) * .55 + .12));
+        const t = el("text", { class: "lbl", "font-size": fs.toFixed(3), "stroke-width": (fs * .22).toFixed(3) }, labels);
+        t.textContent = c.ref;
+        lblEls[sd][c.ref] = { t, bb, fs };
+      }
+    }
+  }
+
+  function applyLook() {
+    const L = LOOKS[look.mask] || LOOKS.green;
+    const fin = (P.order && P.order.finish) || "hasl";
+    let silk = L.silk;
+    if (P.order && P.order.silk === "black" && look.mask !== "black") silk = "#1C1F21";
+    if (P.order && P.order.silk === "white" && look.mask === "white") silk = "#1C1F21";
+    viewer.style.setProperty("--mask", L.mask);
+    viewer.style.setProperty("--cu", L.cu);
+    viewer.style.setProperty("--silk", silk);
+    viewer.style.setProperty("--pad", FINISH[fin] || FINISH.hasl);
+    const lk = $("looks");
+    lk.innerHTML = Object.keys(LOOKS).map(k => `<button type="button" data-look="${k}" style="background:${LOOKS[k].mask}" aria-pressed="${k === look.mask}" title="${k[0].toUpperCase() + k.slice(1)} solder mask" aria-label="${k} solder mask"></button>`).join("");
+  }
+  $("looks").addEventListener("click", e => {
+    const b = e.target.closest("[data-look]"); if (!b || !P) return;
+    look = { mask: b.dataset.look }; store.set(keyP("look"), look); applyLook();
+  });
+
+  /* ---------- boards + progress ---------- */
+  function loadPlaced() { placed = new Set(store.get(keyP("b" + boardNo), [])); }
+  function savePlaced() { store.set(keyP("b" + boardNo), [...placed]); }
+  function renderBoardSel() {
+    const s = $("boardSel");
+    let h = "";
+    for (let i = 1; i <= boards; i++) h += `<option value="${i}"${i === boardNo ? " selected" : ""}>Board ${i}</option>`;
+    h += `<option value="add">Add another board</option>`;
+    s.innerHTML = h;
+  }
+  $("boardSel").onchange = e => {
+    if (!P) return;
+    if (e.target.value === "add") { boards++; boardNo = boards; store.set(keyP("n"), boards); toast(`Started board ${boardNo}. Marks for the other boards are kept.`); }
+    else boardNo = +e.target.value;
+    store.set(keyP("cur"), boardNo);
+    loadPlaced(); renderBoardSel(); buildList();
+  };
+  function updateProgress() {
+    const n = TRACKED.filter(r => placed.has(r)).length;
+    $("nPlaced").textContent = n; $("nTotal").textContent = TRACKED.length;
+    $("bar").style.width = TRACKED.length ? (100 * n / TRACKED.length) + "%" : "0";
+  }
+  $("clearBtn").onclick = () => {
+    if (!P || !placed.size) return;
+    if (confirm(`Clear every placed mark on board ${boardNo}?`)) { placed.clear(); savePlaced(); buildList(); }
+  };
+
+  /* ---------- labels ---------- */
+  function viewCenter(bb, sd) { const cx = (bb[0] + bb[2]) / 2, cy = (bb[1] + bb[3]) / 2; return [sd === "top" ? cx : SX - cx, -cy]; }
+  function placeLabels() {
+    const a = rot * Math.PI / 180, sa = Math.sin(a), ca = Math.cos(a);
+    for (const sd of ["top", "bottom"]) for (const ref in lblEls[sd]) {
+      const L = lblEls[sd][ref];
+      L.t.style.display = sd === side ? "" : "none";
+      if (sd !== side) continue;
+      let [x, y] = viewCenter(L.bb, sd);
+      if (L.t.classList.contains("sel")) {
+        const w = L.bb[2] - L.bb[0], h = L.bb[3] - L.bb[1];
+        const up = (rot % 180 === 0 ? h : w) / 2 + .55 + L.fs * .5;
+        x += -sa * up; y += -ca * up;
+      }
+      L.t.setAttribute("x", x.toFixed(3)); L.t.setAttribute("y", y.toFixed(3));
+      L.t.setAttribute("transform", `rotate(${-rot} ${x.toFixed(3)} ${y.toFixed(3)})`);
+    }
+  }
+
+  /* ---------- view: pan / zoom / rotate ---------- */
+  const applyView = () => svg.setAttribute("viewBox", `${view.x} ${view.y} ${view.w} ${view.h}`);
+  const boxAspect = () => { const r = svg.getBoundingClientRect(); return { W: r.width || 1, H: r.height || 1 }; };
+  function rotPt(x, y) { const a = rot * Math.PI / 180, dx = x - CX, dy = y - CY; return [CX + dx * Math.cos(a) - dy * Math.sin(a), CY + dx * Math.sin(a) + dy * Math.cos(a)]; }
+  function fitTo(minx, miny, maxx, maxy, margin) {
+    const { W, H } = boxAspect();
+    const cs = [[minx, miny], [maxx, miny], [maxx, maxy], [minx, maxy]].map(p => rotPt(p[0], p[1]));
+    const xs = cs.map(p => p[0]), ys = cs.map(p => p[1]);
+    const x0 = Math.min(...xs) - margin, x1 = Math.max(...xs) + margin, y0 = Math.min(...ys) - margin, y1 = Math.max(...ys) + margin;
+    const vr = svg.getBoundingClientRect();
+    const barBottom = document.querySelector(".vbar").getBoundingClientRect().bottom - vr.top + 8;
+    const legTop = vr.bottom - document.querySelector(".legend").getBoundingClientRect().top + 8;
+    const topPad = Math.min(.3, Math.max(0, barBottom) / H), botPad = Math.min(.2, Math.max(0, legTop) / H), avail = 1 - topPad - botPad;
+    const ch = y1 - y0;
+    let w = x1 - x0, h = ch / avail;
+    if (w / h < W / H) w = h * W / H; else h = w * H / W;
+    view = { x: (x0 + x1) / 2 - w / 2, y: y0 - topPad * h - (h * avail - ch) / 2, w, h };
+    applyView();
+  }
+  function fitBoard() { if (P) fitTo(X0, -Y1, X1, -Y0, Math.max(.8, (X1 - X0) * .03)); }
+  function applyRotation() { world.setAttribute("transform", `rotate(${rot} ${CX} ${CY})`); placeLabels(); }
+  function zoomAt(clientX, clientY, f) {
+    const r = svg.getBoundingClientRect();
+    const px = view.x + (clientX - r.left) / r.width * view.w, py = view.y + (clientY - r.top) / r.height * view.h;
+    const size = Math.max(X1 - X0, Y1 - Y0);
+    const nw = Math.min(Math.max(view.w / f, Math.min(1.2, size / 4)), size * 5), nh = nw * view.h / view.w;
+    view = { x: px - (clientX - r.left) / r.width * nw, y: py - (clientY - r.top) / r.height * nh, w: nw, h: nh };
+    applyView();
+  }
+  svg.addEventListener("wheel", e => { e.preventDefault(); zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * (e.ctrlKey ? .012 : .0022))); }, { passive: false });
+  const pointers = new Map();
+  let drag = null, moved = false, pinch = null;
+  svg.addEventListener("pointerdown", e => {
+    svg.setPointerCapture(e.pointerId);
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    moved = false;
+    if (pointers.size === 1) drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
+    if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), w: view.w }; drag = null; }
+  });
+  svg.addEventListener("pointermove", e => {
+    if (!pointers.has(e.pointerId)) { hoverFromEvent(e); return; }
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, (Math.hypot(a.x - b.x, a.y - b.y) / pinch.d) * (pinch.w / view.w));
+      moved = true; return;
+    }
+    if (drag) {
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!moved && Math.hypot(dx, dy) > 4) { moved = true; svg.classList.add("dragging"); hideTip(); }
+      if (moved) { const r = svg.getBoundingClientRect(); view.x = drag.vx - dx / r.width * view.w; view.y = drag.vy - dy / r.height * view.h; applyView(); }
+    }
+  });
+  function endPointer(e) {
+    const wasTap = pointers.size === 1 && !moved;
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinch = null;
+    if (!pointers.size) { drag = null; svg.classList.remove("dragging"); }
+    if (wasTap && e.type === "pointerup") boardTap(e);
+  }
+  svg.addEventListener("pointerup", endPointer);
+  svg.addEventListener("pointercancel", endPointer);
+  svg.addEventListener("pointerleave", () => { if (!pointers.size) { setBoardHover(null); setNet(null); hideTip(); } });
+
+  /* ---------- hover, tap, nets ---------- */
+  function cmpFromPoint(x, y) {
+    const t = document.elementFromPoint(x, y);
+    const g = t && t.closest ? t.closest(".cmp") : null;
+    return { g, pad: t && t.classList && t.classList.contains("pad") ? t : null };
+  }
+  function hoverFromEvent(e) {
+    if (e.pointerType === "touch" || !P) return;
+    const { g, pad } = cmpFromPoint(e.clientX, e.clientY);
+    const ref = g ? g.dataset.ref : null;
+    setBoardHover(ref);
+    if (netMode) setNet(pad && pad.dataset.net ? pad.dataset.net : null);
+    if (ref) showTip(ref, pad, e.clientX, e.clientY); else hideTip();
+  }
+  function setBoardHover(ref) {
+    if (ref === boardHover) return;
+    boardHover = ref;
+    if (pinned === null) preview = ref && refRow[ref] !== undefined ? { row: refRow[ref], ref } : null;
+    render();
+    if (ref && pinned === null && tab === "parts") { const li = list.querySelector(`.row[data-row="${refRow[ref]}"]`); if (li) li.scrollIntoView({ block: "nearest" }); }
+  }
+  function setNet(net) {
+    if (net === netHi) return;
+    if (netHi) for (const p of netEls[side].get(netHi) || []) p.classList.remove("net");
+    netHi = net;
+    if (netHi) for (const p of netEls[side].get(netHi) || []) p.classList.add("net");
+    svg.classList.toggle("has-net", !!netHi);
+  }
+  const cleanNet = n => (n || "").replace(/^\//, "");
+  function showTip(ref, pad, cx, cy) {
+    const row = ROWS[refRow[ref]];
+    let h = `<div><b>${esc(ref)}</b>${row && !row.info ? esc(row.val) : ""}</div>`;
+    if (pad && pad.dataset.pin) {
+      const nm = pad.dataset.name, net = cleanNet(pad.dataset.net);
+      const showName = nm && nm !== pad.dataset.pin && nm !== net;
+      const netTxt = !net ? "" : /^unconnected/i.test(net) ? ", not connected" : ", net " + esc(net);
+      let extra = "";
+      if (netMode && net && !/^unconnected/i.test(net)) { const n = (netEls[side].get(pad.dataset.net) || []).length; extra = `<div class="m">${n} pad${n === 1 ? "" : "s"} on this side</div>`; }
+      h += `<div class="m">Pin ${esc(pad.dataset.pin)}${showName ? " " + esc(nm) : ""}${netTxt}</div>${extra}`;
+    } else if (row) h += `<div class="m">${esc(row.info ? row.val : row.kind)}</div>`;
+    if (placed.has(ref)) h += `<div class="ok">Placed</div>`;
+    tip.innerHTML = h;
+    const vr = viewer.getBoundingClientRect();
+    let x = cx - vr.left + 14, y = cy - vr.top + 16;
+    tip.classList.add("on");
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    if (x + tw > vr.width - 8) x = cx - vr.left - tw - 14;
+    if (y + th > vr.height - 8) y = cy - vr.top - th - 12;
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  function hideTip() { tip.classList.remove("on"); }
+  function boardTap(e) {
+    if (!P) return;
+    const { g, pad } = cmpFromPoint(e.clientX, e.clientY);
+    if (netMode && e.pointerType === "touch") setNet(pad && pad.dataset.net && pad.dataset.net !== netHi ? pad.dataset.net : null);
+    if (!g) { setPinned(null); return; }
+    const ref = g.dataset.ref, r = refRow[ref];
+    if (r === undefined) return;
+    if (tab !== "parts") setTab("parts");
+    setPinned(pinned && pinned.row === r ? null : { row: r }, { scroll: true });
+    if (e.pointerType === "touch") { showTip(ref, pad, e.clientX, e.clientY); clearTimeout(hideTip.t); hideTip.t = setTimeout(hideTip, 2200); }
+  }
+
+  /* ---------- parts list ---------- */
+  function buildList() {
+    if (!P) return;
+    const q = query.trim().toLowerCase();
+    const match = r => !q || [r.val, r.kind, r.lcsc || "", ...r.refs, ...(r.missing || []), ...(r.subs || []).map(s => s[0])].some(s => String(s).toLowerCase().includes(q));
+    const pass = r => {
+      if (r.info) return filter === "all";
+      const n = r.refs.filter(x => placed.has(x)).length;
+      if (filter === "todo") return n < r.refs.length;
+      if (filter === "done") return r.refs.length && n === r.refs.length;
+      return true;
+    };
+    let main = "", extra = "", nm = 0, ne = 0;
+    const locatable = P.mode !== "none";
+    ROWS.forEach((r, i) => {
+      if (!match(r) || !pass(r)) return;
+      const n = r.refs.filter(x => placed.has(x)).length;
+      const full = !r.info && r.refs.length && n === r.refs.length;
+      const chk = r.info || !r.refs.length
+        ? `<span class="check info" aria-hidden="true"><b>${r.refs.length}</b></span>`
+        : `<button type="button" class="check ${full ? "full" : n ? "part" : ""}" data-act="all" aria-label="Mark all ${esc(r.val)} placed">${full ? `<svg viewBox="0 0 20 20"><path d="M4.5 10.5l3.6 3.6 7.4-8"/></svg>` : `<b>${n}</b>of ${r.refs.length}`}</button>`;
+      const chips = r.refs.map(ref => {
+        const m = q && ref.toLowerCase() === q ? " match" : "";
+        return r.info ? `<button type="button" class="ref static${m}" data-ref="${esc(ref)}">${esc(ref)}</button>`
+          : `<button type="button" class="ref${m}" data-ref="${esc(ref)}" aria-pressed="${placed.has(ref)}" title="Mark ${esc(ref)} placed">${esc(ref)}</button>`;
+      }).join("") + (r.missing || []).map(ref => `<span class="ref gone" title="In the BOM, not on the board">${esc(ref)}</span>`).join("");
+      let note = "";
+      if (r.note) note += `<p class="note${r.warn ? " warn" : ""}">${esc(r.note)}</p>`;
+      if (r.polar) note += `<p class="note"><span class="pin1"></span>Check orientation: pin 1 pad shows in red.</p>`;
+      const onlyBottom = locatable && r.refs.length && r.refs.every(x => comps[x] && comps[x].sides.bottom && !comps[x].sides.top);
+      const lcsc = r.lcsc ? `<a class="lcsc" href="https://www.lcsc.com/search?q=${encodeURIComponent(r.lcsc)}" target="_blank" rel="noopener" title="Open on LCSC">${esc(r.lcsc)}</a>` : "";
+      const li = `<li class="row${full ? " done" : ""}${pinned && pinned.row === i ? " active" : ""}" data-row="${i}">${chk}<div>
+        <div class="l1"><span class="val">${esc(r.val)}</span><span class="qty">×${r.refs.length}</span>${lcsc}</div>
+        <div class="kind">${onlyBottom ? "Bottom side. " : ""}${esc(r.kind || "")}</div>
+        <div class="refs">${chips}</div>${note}</div></li>`;
+      if (r.info) { extra += li; ne++; } else { main += li; nm++; }
+    });
+    let html = "";
+    if (nm) html += `<ol>${main}</ol>`;
+    if (ne) html += `<h2 class="group-h">On the board, not in the BOM</h2><ol>${extra}</ol>`;
+    if (!nm && !ne) {
+      html = `<p class="empty">${filter === "done" && !q ? "Nothing marked placed yet. Tap a designator after you set the part down." :
+        filter === "todo" && !q ? "Every part is marked placed. Ready for reflow." :
+          ROWS.length ? `No line matches “${esc(query)}”. Try a value like 100n, a designator like C14, or an LCSC number.` : "No parts found yet."}</p>`;
+    }
+    list.innerHTML = html;
+    updateProgress();
+    render();
+  }
+  list.addEventListener("click", e => {
+    const li = e.target.closest(".row"); if (!li) return;
+    if (e.target.closest("a")) return;
+    const i = +li.dataset.row, r = ROWS[i];
+    const chip = e.target.closest(".ref"), chk = e.target.closest('[data-act="all"]');
+    if (chk) {
+      const all = r.refs.every(x => placed.has(x));
+      r.refs.forEach(x => all ? placed.delete(x) : placed.add(x));
+      savePlaced(); pinned = { row: i }; buildList(); return;
+    }
+    if (chip && !r.info && !chip.classList.contains("gone")) {
+      const ref = chip.dataset.ref;
+      placed.has(ref) ? placed.delete(ref) : placed.add(ref);
+      savePlaced(); pinned = { row: i }; preview = { row: i, ref }; buildList(); return;
+    }
+    setPinned(pinned && pinned.row === i ? null : { row: i });
+  });
+  let lastPointer = "mouse";
+  document.addEventListener("pointerdown", e => { lastPointer = e.pointerType; }, true);
+  list.addEventListener("mouseover", e => {
+    if (lastPointer === "touch") return;
+    const li = e.target.closest(".row"); if (!li) return;
+    const chip = e.target.closest(".ref:not(.gone)");
+    const i = +li.dataset.row;
+    const next = { row: i, ref: chip ? chip.dataset.ref : null };
+    if (preview && preview.row === next.row && preview.ref === next.ref) return;
+    preview = next; ensureSide(ROWS[i].refs); render();
+  });
+  list.addEventListener("mouseleave", () => { if (lastPointer === "touch") return; preview = null; if (pinned) ensureSide(selRefs()); render(); });
+
+  function selRefs() {
+    if (preview) return ROWS[preview.row] ? ROWS[preview.row].refs : [];
+    if (!pinned) return [];
+    if (pinned.refs) return pinned.refs;
+    return ROWS[pinned.row] ? ROWS[pinned.row].refs : [];
+  }
+  function setPinned(pn, opts = {}) {
+    pinned = pn; preview = null;
+    if (pn) ensureSide(selRefs());
+    list.querySelectorAll(".row").forEach(li => li.classList.toggle("active", !!pinned && pinned.row === +li.dataset.row));
+    $("chkList").querySelectorAll("li").forEach(li => li.classList.toggle("active", !!pinned && pinned.check === +li.dataset.i));
+    if (pn && pn.row !== undefined && opts.scroll) {
+      const li = list.querySelector(`.row[data-row="${pn.row}"]`);
+      if (li) li.scrollIntoView({ block: "nearest", behavior: reduceMotion() ? "auto" : "smooth" });
+    }
+    render();
+  }
+  function ensureSide(refs) {
+    if (!refs || !refs.length) return;
+    if (!refs.some(ref => comps[ref] && comps[ref].sides[side]) && refs.some(ref => comps[ref])) setSide(side === "top" ? "bottom" : "top");
+  }
+
+  function render() {
+    if (!P) return;
+    const sel = new Set(selRefs());
+    const focusRef = preview ? preview.ref : null;
+    const els = cmpEls[side];
+    for (const ref in els) {
+      const g = els[ref], s = sel.has(ref);
+      g.classList.toggle("sel", s);
+      g.classList.toggle("focus", s && focusRef === ref);
+      g.classList.toggle("others-dim", s && !!focusRef && focusRef !== ref);
+      g.classList.toggle("placed", placed.has(ref));
+      g.classList.toggle("hover", boardHover === ref);
+      const L = lblEls[side][ref];
+      if (L) { L.t.classList.toggle("sel", s); L.t.classList.toggle("placed", placed.has(ref)); }
+    }
+    svg.classList.toggle("has-sel", sel.size > 0);
+    list.querySelectorAll(".row").forEach(li => li.classList.toggle("hot", !!boardHover && +li.dataset.row === refRow[boardHover] && !pinned));
+    list.querySelectorAll(".ref").forEach(c => c.classList.toggle("focus", (!!focusRef && c.dataset.ref === focusRef) || c.dataset.ref === boardHover));
+    placeLabels();
+  }
+
+  /* ---------- checks ---------- */
+  function renderChecks() {
+    const cs = P.checks;
+    const e = cs.filter(c => c.level === "error").length, w = cs.filter(c => c.level === "warn").length;
+    const n = $("chkN");
+    n.textContent = e + w || cs.length;
+    n.className = "n" + (e ? " err" : w ? " warn" : "");
+    const order = { error: 0, warn: 1, info: 2 };
+    const sorted = cs.map((c, i) => ({ c, i })).sort((a, b) => order[a.c.level] - order[b.c.level]);
+    $("chkList").innerHTML = sorted.length ? sorted.map(({ c, i }) => {
+      const link = c.refs && c.refs.length && P.mode !== "none";
+      const lvl = c.level === "error" ? "Error" : c.level === "warn" ? "Warning" : "Note";
+      return `<li class="${c.level}${link ? " link" : ""}" data-i="${i}"><span class="lv" aria-label="${lvl}"></span><div>${esc(c.text)}${link ? `<span class="hint">Show ${c.refs.length > 1 ? "them" : "it"} on the board</span>` : ""}</div></li>`;
+    }).join("") : `<li class="info"><span class="lv"></span><div>No problems found between the BOM and the board.</div></li>`;
+  }
+  $("chkList").addEventListener("click", e => {
+    const li = e.target.closest("li.link"); if (!li) return;
+    const i = +li.dataset.i, c = P.checks[i];
+    setPinned(pinned && pinned.check === i ? null : { check: i, refs: c.refs.filter(r => comps[r]) });
+    if (pinned) zoomToSel();
+  });
+  function setTab(t) {
+    tab = t;
+    $("tabParts").setAttribute("aria-selected", t === "parts"); $("tabChecks").setAttribute("aria-selected", t === "checks");
+    $("partsPane").hidden = t !== "parts"; $("checksPane").hidden = t !== "checks";
+  }
+  $("tabParts").onclick = () => setTab("parts");
+  $("tabChecks").onclick = () => setTab("checks");
+
+  /* ---------- PDF report ---------- */
+  const pdfText = s => String(s == null ? "" : s).replace(/Ω/g, " ohm").replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/[→]/g, "->").replace(/[^\x00-\xFF–—•…€]/g, "?");
+  $("reportBtn").onclick = async () => {
+    if (!P) return;
+    if (!window.jspdf || !window.jspdf.jsPDF) { toast("The PDF library didn't load. Check your connection and try again."); return; }
+    const doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4" });
+    const W = 210, M = 16, CW = W - 2 * M;
+    let y = 18;
+    const line = (h = 0) => { if (y + h > 282) { doc.addPage(); y = 18; } };
+    const text = (s, size, style, color, gap = 1.2) => {
+      doc.setFont("helvetica", style || "normal"); doc.setFontSize(size); doc.setTextColor(...(color || [23, 34, 42]));
+      const lines = doc.splitTextToSize(pdfText(s), CW);
+      for (const l of lines) { line(size * .42); doc.text(l, M, y); y += size * .42 + gap; }
+    };
+    text("poke~pcb check report", 17, "bold");
+    const m = P.meta, o = P.order;
+    text(`${P.name}, ${m.w.toFixed(1)} x ${m.h.toFixed(1)} mm, ${m.cu} layers${m.tool ? ", " + m.tool : ""}`, 10.5, "normal", [60, 72, 80]);
+    const src = [`Gerbers: ${m.source.split("/").pop()}`, `BOM: ${m.bom || "none"}`, `CPL: ${m.cpl || "none"}`];
+    if (o && o.po) src.push(`JLC order ${o.po}${o.mask ? ", " + o.mask + " mask" : ""}${o.finishLabel ? ", " + o.finishLabel : ""}`);
+    text(src.join("   |   "), 9, "normal", [86, 102, 110]);
+    text(`Made ${new Date().toLocaleString()}`, 9, "normal", [86, 102, 110]);
+    y += 3;
+    const e = P.checks.filter(c => c.level === "error"), w = P.checks.filter(c => c.level === "warn"), inf = P.checks.filter(c => c.level === "info");
+    const parts = TRACKED.length;
+    text(`${e.length} error${e.length === 1 ? "" : "s"}, ${w.length} warning${w.length === 1 ? "" : "s"}, ${inf.length} note${inf.length === 1 ? "" : "s"}. ${ROWS.filter(r => !r.info).length} BOM lines, ${parts} parts to place.`, 11.5, "bold");
+    y += 2;
+    const COL = { error: [194, 59, 50], warn: [191, 120, 20], info: [120, 132, 138] };
+    for (const c of [...e, ...w, ...inf]) {
+      doc.setFillColor(...COL[c.level]);
+      line(6); doc.circle(M + 1.3, y - 1.2, 1.1, "F");
+      const lines = doc.splitTextToSize(pdfText(c.text), CW - 6);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(10); doc.setTextColor(23, 34, 42);
+      for (const l of lines) { line(4.5); doc.text(l, M + 5, y); y += 4.4; }
+      y += 1.6;
+    }
+    if (!P.checks.length) text("No problems found.", 10);
+    y += 4;
+    text("BOM as matched to the board", 12.5, "bold"); y += 1;
+    const cols = [{ t: "Value", w: 36 }, { t: "Qty", w: 11 }, { t: "Designators", w: 62 }, { t: "LCSC", w: 22 }, { t: "Footprint", w: CW - 131 }];
+    const head = () => {
+      doc.setFont("helvetica", "bold"); doc.setFontSize(8.5); doc.setTextColor(86, 102, 110);
+      let x = M; for (const c of cols) { doc.text(c.t, x, y); x += c.w; }
+      y += 1.6; doc.setDrawColor(200, 209, 211); doc.line(M, y, M + CW, y); y += 3.6;
+    };
+    line(12); head();
+    for (const r of ROWS) {
+      const subOf = new Map((r.subs || []).map(([a, b]) => [b, a]));
+      const cells = [r.val, String(r.refs.length), r.refs.map(x => subOf.has(x) ? `${x} (BOM says ${subOf.get(x)})` : x).join(", ") + ((r.missing || []).length ? `  (missing: ${r.missing.join(", ")})` : ""), r.lcsc || "", r.kind || ""];
+      doc.setFont("helvetica", "normal"); doc.setFontSize(8.5);
+      const wrapped = cells.map((c, k) => doc.splitTextToSize(pdfText(c), cols[k].w - 2));
+      const h = Math.max(...wrapped.map(a => a.length)) * 3.6 + 1.8;
+      if (y + h > 282) { doc.addPage(); y = 18; head(); }
+      let x = M;
+      doc.setTextColor(...(r.info ? [120, 132, 138] : r.warn ? [160, 70, 20] : [23, 34, 42]));
+      wrapped.forEach((a, k) => { a.forEach((l, j) => doc.text(l, x, y + j * 3.6)); x += cols[k].w; });
+      y += h;
+      doc.setDrawColor(228, 233, 234); doc.line(M, y - 2.2, M + CW, y - 2.2);
+    }
+    const blob = doc.output("blob");
+    await saveFile(`${P.name}-check-report.pdf`, blob);
+  };
+
+  /* ---------- offline copy ---------- */
+  $("saveBtn").onclick = async () => {
+    if (!P) return;
+    const json = JSON.stringify(P).replace(/</g, "\\u003c");
+    const html = PRISTINE.replace(/<script data-poke(?:="")?>/, `<script type="application/json" id="poke-data" data-poke>${json}<\/script>\n<script data-poke>`);
+    await saveFile(`${P.name}-poke-pcb.html`, html);
+  };
+  $("filesBtn").onclick = () => { app.hidden = true; landing.hidden = false; renderStaged(); hideTip(); };
+
+  /* ---------- controls ---------- */
+  function setSide(s, force) {
+    if (s === side && !force) return;
+    setNet(null);
+    side = s;
+    stTop.style.display = ovTop.style.display = s === "top" ? "" : "none";
+    stBot.style.display = ovBot.style.display = s === "bottom" ? "" : "none";
+    $("sideTop").setAttribute("aria-pressed", s === "top"); $("sideBot").setAttribute("aria-pressed", s === "bottom");
+    $("lgMir").hidden = s !== "bottom";
+    svg.setAttribute("aria-label", (s === "top" ? "Top" : "Bottom") + " side of the board with part locations");
+    boardHover = null; hideTip();
+    render();
+  }
+  $("sideTop").onclick = () => setSide("top");
+  $("sideBot").onclick = () => setSide("bottom");
+  function toggle(btn, cls, invert) {
+    btn.onclick = () => { const on = btn.getAttribute("aria-pressed") !== "true"; btn.setAttribute("aria-pressed", on); svg.classList.toggle(cls, invert ? !on : on); };
+  }
+  toggle($("tgCu"), "hide-cu", true);
+  toggle($("tgSilk"), "hide-silk", true);
+  toggle($("tgLbl"), "show-lbl", false);
+  const toggleNet = () => { if (!P || !P.hasNets) return; netMode = !netMode; $("tgNet").setAttribute("aria-pressed", netMode); $("lgNet").hidden = !netMode; if (!netMode) setNet(null); toast(netMode ? "Nets on: hover a pad to see everything it connects to." : "Nets off"); };
+  $("tgNet").onclick = toggleNet;
+  const rotate = () => { rot = (rot + 90) % 360; applyRotation(); fitBoard(); };
+  $("rotBtn").onclick = rotate;
+  $("fitBtn").onclick = fitBoard;
+  $("zoomSelBtn").onclick = zoomToSel;
+  function zoomToSel() {
+    const refs = selRefs().filter(r => comps[r] && comps[r].sides[side]);
+    if (!refs.length) { fitBoard(); return; }
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+    for (const r of refs) {
+      const bb = comps[r].sides[side].bb;
+      const p = viewCenter([bb[0], bb[1], bb[0], bb[1]], side), q = viewCenter([bb[2], bb[3], bb[2], bb[3]], side);
+      a = Math.min(a, p[0], q[0]); c = Math.max(c, p[0], q[0]); b = Math.min(b, p[1], q[1]); d = Math.max(d, p[1], q[1]);
+    }
+    fitTo(a, b, c, d, 2.2);
+  }
+  document.querySelectorAll(".filters button").forEach(b => b.onclick = () => {
+    filter = b.dataset.f;
+    document.querySelectorAll(".filters button").forEach(x => x.setAttribute("aria-pressed", x === b));
+    buildList();
+  });
+  qIn.addEventListener("input", () => {
+    query = qIn.value;
+    const qq = query.trim().toLowerCase();
+    const exact = Object.keys(refRow).find(r => r.toLowerCase() === qq);
+    const lc = ROWS.findIndex(r => r.lcsc && r.lcsc.toLowerCase() === qq);
+    buildList();
+    if (exact) { pinned = { row: refRow[exact] }; preview = { row: refRow[exact], ref: exact }; ensureSide([exact]); render(); }
+    else if (lc >= 0) setPinned({ row: lc });
+  });
+  const visibleRows = () => [...list.querySelectorAll(".row")].map(li => +li.dataset.row);
+  document.addEventListener("keydown", e => {
+    if (app.hidden || !P) return;
+    if (e.target === qIn) { if (e.key === "Escape") { qIn.value = ""; query = ""; buildList(); qIn.blur(); } return; }
+    if (e.target.tagName === "SELECT" || e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k === "arrowdown" || k === "j" || k === "arrowup" || k === "k") {
+      e.preventDefault();
+      if (tab !== "parts") setTab("parts");
+      const rows = visibleRows(); if (!rows.length) return;
+      let idx = rows.indexOf(pinned ? pinned.row : -1);
+      idx = (k === "arrowdown" || k === "j") ? Math.min(rows.length - 1, idx + 1) : Math.max(0, idx < 0 ? 0 : idx - 1);
+      setPinned({ row: rows[idx] }, { scroll: true });
+    } else if (k === " " && pinned && pinned.row !== undefined && !ROWS[pinned.row].info) {
+      if (e.target.closest && e.target.closest("button, a")) return;
+      e.preventDefault();
+      const r = ROWS[pinned.row], all = r.refs.every(x => placed.has(x));
+      r.refs.forEach(x => all ? placed.delete(x) : placed.add(x));
+      savePlaced(); buildList();
+    } else if (k === "f") setSide(side === "top" ? "bottom" : "top");
+    else if (k === "r") rotate();
+    else if (k === "z") zoomToSel();
+    else if (k === "0") fitBoard();
+    else if (k === "n") toggleNet();
+    else if (k === "escape") setPinned(null);
+    else if (k === "/") { e.preventDefault(); if (tab !== "parts") setTab("parts"); qIn.focus(); }
+  });
+
+  let lastSize = "";
+  new ResizeObserver(() => {
+    if (!P) return;
+    const r = svg.getBoundingClientRect(), s = `${Math.round(r.width)}x${Math.round(r.height)}`;
+    if (s === lastSize || !r.width) return;
+    const first = !lastSize; lastSize = s;
+    if (first) { fitBoard(); return; }
+    const cx = view.x + view.w / 2, cy = view.y + view.h / 2, h = view.w * r.height / (r.width || 1);
+    view = { x: cx - view.w / 2, y: cy - h / 2, w: view.w, h };
+    applyView();
+  }).observe(svg);
+
+  /* ---------- start ---------- */
+  renderStaged();
+  const embedded = $("poke-data");
+  if (embedded) {
+    try { openProject(JSON.parse(embedded.textContent)); } catch (e) { console.error(e); }
+  }
+  window.__poke = { get project() { return P; }, openProject, ingest, merged, openFromStaging };
+})();
+
+</script>
+</body>
+</html>

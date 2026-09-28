@@ -1,0 +1,19 @@
+name: Build check
+
+on:
+  push:
+    paths: ["src/**", "build.py"]
+  pull_request:
+    paths: ["src/**", "build.py"]
+
+jobs:
+  verify-dist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - run: python3 build.py
+      - name: Fail if dist/poke-pcb.html is out of sync with src/
+        run: git diff --exit-code -- dist/poke-pcb.html
